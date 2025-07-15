@@ -1,1 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="builder-layout">
+    <form id="resume-form">
+        <section>
+            <h3>Personal Information</h3>
+            <input type="text" id="name" placeholder="Full Name"><br>
+            <input type="text" id="title" placeholder="Job Title">
+        </section>
+        <section>
+            <h3>Professional Summary</h3>
+            <textarea id="summary-input" placeholder="Summarize your strengths and goals"></textarea>
+            <button type="button" onclick="getAISuggestion('summary')">AI Suggest</button>
+        </section>
+        <section>
+            <h3>Work Experience</h3>
+            <textarea id="experience-input" placeholder="Describe your experience"></textarea>
+            <button type="button" onclick="getAISuggestion('experience')">AI Suggest</button>
+        </section>
+        <section>
+            <h3>Education</h3>
+            <textarea id="education-input" placeholder="Describe your education"></textarea>
+            <button type="button" onclick="getAISuggestion('education')">AI Suggest</button>
+        </section>
+        <section>
+            <h3>Skills</h3>
+            <textarea id="skills-input" placeholder="List your skills"></textarea>
+            <button type="button" onclick="getAISuggestion('skills')">AI Suggest</button>
+        </section>
+        <button type="button" onclick="updatePreview()">Preview Resume</button>
+    </form>
+    <div class="resume-preview" id="resume-preview">
+        <!-- Live Preview will appear here -->
+    </div>
+</div>
+{% endblock %}
 

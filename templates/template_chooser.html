@@ -1,1 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Select a Resume Template</h2>
+<div class="template-gallery">
+    <div class="template-card">
+        <h3>Classic</h3>
+        <div class="template-preview classic"></div>
+        <a href="/builder" class="btn">Choose</a>
+    </div>
+    <div class="template-card">
+        <h3>Modern</h3>
+        <div class="template-preview modern"></div>
+        <a href="/builder" class="btn">Choose</a>
+    </div>
+    <div class="template-card">
+        <h3>Technical</h3>
+        <div class="template-preview tech"></div>
+        <a href="/builder" class="btn">Choose</a>
+    </div>
+</div>
+{% endblock %}
 

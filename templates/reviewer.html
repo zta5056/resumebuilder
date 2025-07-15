@@ -1,1 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>AI Resume Reviewer</h2>
+<form method="POST">
+    <textarea name="resume_text" rows="14" cols="70" placeholder="Paste your resume content here">{{ resume_text or '' }}</textarea>
+    <button class="btn" type="submit">Review Resume</button>
+</form>
+{% if feedback %}
+<div class="review-feedback">
+    <h3>AI Feedback:</h3>
+    <pre>{{ feedback }}</pre>
+</div>
+{% endif %}
+{% endblock %}
 

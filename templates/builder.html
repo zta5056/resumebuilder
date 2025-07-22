@@ -1,37 +1,418 @@
 {% extends "base.html" %}
+
+{% block title %}Resume Builder - AI Resume Builder{% endblock %}
+
 {% block content %}
-<div class="builder-layout">
-    <form id="resume-form">
-        <section>
-            <h3>Personal Information</h3>
-            <input type="text" id="name" placeholder="Full Name"><br>
-            <input type="text" id="title" placeholder="Job Title">
-        </section>
-        <section>
-            <h3>Professional Summary</h3>
-            <textarea id="summary-input" placeholder="Summarize your strengths and goals"></textarea>
-            <button type="button" onclick="getAISuggestion('summary')">AI Suggest</button>
-        </section>
-        <section>
-            <h3>Work Experience</h3>
-            <textarea id="experience-input" placeholder="Describe your experience"></textarea>
-            <button type="button" onclick="getAISuggestion('experience')">AI Suggest</button>
-        </section>
-        <section>
-            <h3>Education</h3>
-            <textarea id="education-input" placeholder="Describe your education"></textarea>
-            <button type="button" onclick="getAISuggestion('education')">AI Suggest</button>
-        </section>
-        <section>
-            <h3>Skills</h3>
-            <textarea id="skills-input" placeholder="List your skills"></textarea>
-            <button type="button" onclick="getAISuggestion('skills')">AI Suggest</button>
-        </section>
-        <button type="button" onclick="updatePreview()">Preview Resume</button>
-    </form>
-    <div class="resume-preview" id="resume-preview">
-        <!-- Live Preview will appear here -->
+<div class="builder-container">
+    <div class="builder-header">
+        <h1><i class="fas fa-magic"></i> AI Resume Builder</h1>
+        <p>Fill in your information and let AI enhance your content</p>
+    </div>
+
+    <div class="builder-layout">
+        <div class="builder-form">
+            <form id="resume-form">
+                <!-- Personal Information -->
+                <div class="form-section">
+                    <h3><i class="fas fa-user"></i> Personal Information</h3>
+                    <div class="form-group">
+                        <label for="full-name">Full Name *</label>
+                        <input type="text" id="full-name" name="full_name" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" placeholder="john@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" name="location" placeholder="City, State">
+                    </div>
+                    <div class="form-group">
+                        <label for="job-title">Target Job Title</label>
+                        <input type="text" id="job-title" name="job_title" placeholder="Software Engineer">
+                    </div>
+                </div>
+
+                <!-- Professional Summary -->
+                <div class="form-section">
+                    <h3><i class="fas fa-align-left"></i> Professional Summary</h3>
+                    <div class="form-group ai-enhanced">
+                        <label for="summary">Professional Summary</label>
+                        <textarea id="summary" name="summary" rows="4" placeholder="Write a brief professional summary..."></textarea>
+                        <button type="button" class="btn-ai" onclick="enhanceWithAI('summary')">
+                            <i class="fas fa-magic"></i> AI Enhance
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Work Experience -->
+                <div class="form-section">
+                    <h3><i class="fas fa-briefcase"></i> Work Experience</h3>
+                    <div id="experience-container">
+                        <div class="experience-item">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Job Title</label>
+                                    <input type="text" name="exp_title_0" placeholder="Software Engineer">
+                                </div>
+                                <div class="form-group">
+                                    <label>Company</label>
+                                    <input type="text" name="exp_company_0" placeholder="Tech Corp">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Start Date</label>
+                                    <input type="month" name="exp_start_0">
+                                </div>
+                                <div class="form-group">
+                                    <label>End Date</label>
+                                    <input type="month" name="exp_end_0">
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" name="exp_current_0"> Current Position
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group ai-enhanced">
+                                <label>Job Description</label>
+                                <textarea name="exp_desc_0" rows="4" placeholder="Describe your responsibilities and achievements..."></textarea>
+                                <button type="button" class="btn-ai" onclick="enhanceWithAI('exp_desc_0')">
+                                    <i class="fas fa-magic"></i> AI Enhance
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="addExperience()">
+                        <i class="fas fa-plus"></i> Add Experience
+                    </button>
+                </div>
+
+                <!-- Education -->
+                <div class="form-section">
+                    <h3><i class="fas fa-graduation-cap"></i> Education</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Degree</label>
+                            <input type="text" name="edu_degree" placeholder="Bachelor of Science">
+                        </div>
+                        <div class="form-group">
+                            <label>Field of Study</label>
+                            <input type="text" name="edu_field" placeholder="Computer Science">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>School</label>
+                            <input type="text" name="edu_school" placeholder="University Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Graduation Year</label>
+                            <input type="number" name="edu_year" placeholder="2023">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="form-section">
+                    <h3><i class="fas fa-cogs"></i> Skills</h3>
+                    <div class="form-group ai-enhanced">
+                        <label for="skills">Skills (separate with commas)</label>
+                        <textarea id="skills" name="skills" rows="3" placeholder="Python, JavaScript, React, SQL..."></textarea>
+                        <button type="button" class="btn-ai" onclick="enhanceWithAI('skills')">
+                            <i class="fas fa-magic"></i> AI Enhance
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="saveResume()">
+                        <i class="fas fa-save"></i> Save Draft
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="generatePDF()">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="preview-panel">
+            <div class="preview-header">
+                <h3><i class="fas fa-eye"></i> Live Preview</h3>
+            </div>
+            <div id="resume-preview" class="resume-preview">
+                <div class="preview-placeholder">
+                    <i class="fas fa-file-alt"></i>
+                    <p>Your resume preview will appear here as you fill in the form</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loading-modal" class="modal">
+    <div class="modal-content">
+        <div class="loader"></div>
+        <p>AI is enhancing your content...</p>
     </div>
 </div>
 {% endblock %}
 
+{% block scripts %}
+<script>
+let experienceCount = 1;
+
+// Update preview as user types
+document.addEventListener('DOMContentLoaded', function() {
+    const formInputs = document.querySelectorAll('#resume-form input, #resume-form textarea');
+    formInputs.forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+    updatePreview();
+});
+
+// Enhanced AI functionality
+async function enhanceWithAI(fieldId) {
+    const field = document.getElementById(fieldId) || document.querySelector(`[name="${fieldId}"]`);
+    const content = field.value.trim();
+    
+    if (!content) {
+        alert('Please enter some content first');
+        return;
+    }
+
+    // Show loading
+    const modal = document.getElementById('loading-modal');
+    modal.style.display = 'flex';
+    
+    const jobTitle = document.getElementById('job-title').value || '';
+    
+    try {
+        const response = await fetch('/ai_suggest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                section: fieldId.includes('summary') ? 'summary' : 
+                        fieldId.includes('exp_desc') ? 'experience' : 
+                        fieldId.includes('skills') ? 'skills' : 'general',
+                content: content,
+                job_title: jobTitle
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.suggestion) {
+            field.value = data.suggestion;
+            updatePreview();
+        } else if (data.error) {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Network error: ' + error.message);
+    } finally {
+        modal.style.display = 'none';
+    }
+}
+
+function addExperience() {
+    const container = document.getElementById('experience-container');
+    const newExperience = document.createElement('div');
+    newExperience.className = 'experience-item';
+    newExperience.innerHTML = `
+        <div class="form-row">
+            <div class="form-group">
+                <label>Job Title</label>
+                <input type="text" name="exp_title_${experienceCount}" placeholder="Software Engineer">
+            </div>
+            <div class="form-group">
+                <label>Company</label>
+                <input type="text" name="exp_company_${experienceCount}" placeholder="Tech Corp">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="month" name="exp_start_${experienceCount}">
+            </div>
+            <div class="form-group">
+                <label>End Date</label>
+                <input type="month" name="exp_end_${experienceCount}">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="exp_current_${experienceCount}"> Current Position
+                </label>
+            </div>
+        </div>
+        <div class="form-group ai-enhanced">
+            <label>Job Description</label>
+            <textarea name="exp_desc_${experienceCount}" rows="4" placeholder="Describe your responsibilities and achievements..."></textarea>
+            <button type="button" class="btn-ai" onclick="enhanceWithAI('exp_desc_${experienceCount}')">
+                <i class="fas fa-magic"></i> AI Enhance
+            </button>
+        </div>
+        <button type="button" class="btn btn-danger btn-small" onclick="removeExperience(this)">
+            <i class="fas fa-trash"></i> Remove
+        </button>
+    `;
+    
+    container.appendChild(newExperience);
+    
+    // Add event listeners to new inputs
+    const newInputs = newExperience.querySelectorAll('input, textarea');
+    newInputs.forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+    
+    experienceCount++;
+}
+
+function removeExperience(button) {
+    button.closest('.experience-item').remove();
+    updatePreview();
+}
+
+function updatePreview() {
+    const formData = new FormData(document.getElementById('resume-form'));
+    const data = Object.fromEntries(formData);
+    
+    const preview = document.getElementById('resume-preview');
+    
+    // Generate HTML preview
+    let html = `
+        <div class="resume-header">
+            <h1>${data.full_name || 'Your Name'}</h1>
+            <div class="contact-info">
+                ${data.email ? `<span><i class="fas fa-envelope"></i> ${data.email}</span>` : ''}
+                ${data.phone ? `<span><i class="fas fa-phone"></i> ${data.phone}</span>` : ''}
+                ${data.location ? `<span><i class="fas fa-map-marker-alt"></i> ${data.location}</span>` : ''}
+            </div>
+            ${data.job_title ? `<h2 class="target-role">${data.job_title}</h2>` : ''}
+        </div>
+    `;
+    
+    if (data.summary) {
+        html += `
+            <div class="resume-section">
+                <h3>Professional Summary</h3>
+                <p>${data.summary}</p>
+            </div>
+        `;
+    }
+    
+    // Add experience sections
+    const experienceItems = [];
+    for (let i = 0; i < experienceCount; i++) {
+        if (data[`exp_title_${i}`] || data[`exp_company_${i}`]) {
+            experienceItems.push(`
+                <div class="experience-entry">
+                    <div class="exp-header">
+                        <h4>${data[`exp_title_${i}`] || 'Job Title'}</h4>
+                        <span class="company">${data[`exp_company_${i}`] || 'Company'}</span>
+                    </div>
+                    <div class="exp-dates">
+                        ${data[`exp_start_${i}`] || 'Start'} - ${data[`exp_current_${i}`] ? 'Present' : data[`exp_end_${i}`] || 'End'}
+                    </div>
+                    ${data[`exp_desc_${i}`] ? `<p class="exp-description">${data[`exp_desc_${i}`].replace(/\n/g, '<br>')}</p>` : ''}
+                </div>
+            `);
+        }
+    }
+    
+    if (experienceItems.length > 0) {
+        html += `
+            <div class="resume-section">
+                <h3>Work Experience</h3>
+                ${experienceItems.join('')}
+            </div>
+        `;
+    }
+    
+    if (data.edu_degree || data.edu_school) {
+        html += `
+            <div class="resume-section">
+                <h3>Education</h3>
+                <div class="education-entry">
+                    <h4>${data.edu_degree || 'Degree'} ${data.edu_field ? 'in ' + data.edu_field : ''}</h4>
+                    <span class="school">${data.edu_school || 'School'}</span>
+                    ${data.edu_year ? `<span class="year">${data.edu_year}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (data.skills) {
+        const skillsList = data.skills.split(',').map(skill => skill.trim()).filter(skill => skill);
+        if (skillsList.length > 0) {
+            html += `
+                <div class="resume-section">
+                    <h3>Skills</h3>
+                    <div class="skills-list">
+                        ${skillsList.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    preview.innerHTML = html || `
+        <div class="preview-placeholder">
+            <i class="fas fa-file-alt"></i>
+            <p>Your resume preview will appear here as you fill in the form</p>
+        </div>
+    `;
+}
+
+async function saveResume() {
+    const formData = new FormData(document.getElementById('resume-form'));
+    const data = Object.fromEntries(formData);
+    
+    try {
+        const response = await fetch('/builder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        alert(result.message || 'Resume saved successfully!');
+    } catch (error) {
+        alert('Error saving resume: ' + error.message);
+    }
+}
+
+async function generatePDF() {
+    const formData = new FormData(document.getElementById('resume-form'));
+    const data = Object.fromEntries(formData);
+    
+    try {
+        const response = await fetch('/export_pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        alert(result.message || 'PDF generation initiated!');
+    } catch (error) {
+        alert('Error generating PDF: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

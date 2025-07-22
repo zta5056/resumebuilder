@@ -1,12 +1,80 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="welcome-card">
-    <h2>Welcome to the AI Resume Builder</h2>
-    <p>Create, enhance, and review your resume with the power of AI.</p>
-    <div class="home-actions">
-        <a class="btn" href="/builder">Start Building</a>
-        <a class="btn" href="/reviewer">Review Resume</a>
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Build Your Perfect Resume with AI</h1>
+        <p class="hero-subtitle">Create, enhance, and review your resume with the power of artificial intelligence. Get hired faster with ATS-optimized resumes.</p>
+        
+        <div class="hero-buttons">
+            <a href="/builder" class="btn btn-primary btn-large">
+                <i class="fas fa-magic"></i>
+                Start Building
+            </a>
+            <a href="/templates" class="btn btn-secondary btn-large">
+                <i class="fas fa-eye"></i>
+                View Templates
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="features-section">
+    <div class="container">
+        <h2 class="section-title">Powerful AI Features</h2>
+        <div class="features-grid">
+            <div class="feature-card" onclick="location.href='/builder'">
+                <div class="feature-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="feature-title">AI Resume Builder</h3>
+                <p class="feature-description">Let AI help you craft compelling resume content with industry-specific suggestions and ATS optimization.</p>
+                <div class="feature-tags">
+                    <span class="tag">AI-Powered</span>
+                    <span class="tag">ATS-Friendly</span>
+                    <span class="tag">Professional</span>
+                </div>
+            </div>
+
+            <div class="feature-card" onclick="location.href='/reviewer'">
+                <div class="feature-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3 class="feature-title">Resume Reviewer</h3>
+                <p class="feature-description">Get detailed feedback on your existing resume with AI-powered analysis and improvement suggestions.</p>
+                <div class="feature-tags">
+                    <span class="tag">Analysis</span>
+                    <span class="tag">Feedback</span>
+                    <span class="tag">Improvements</span>
+                </div>
+            </div>
+
+            <div class="feature-card" onclick="location.href='/templates'">
+                <div class="feature-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3 class="feature-title">Professional Templates</h3>
+                <p class="feature-description">Choose from a variety of modern, professional resume templates designed for different industries.</p>
+                <div class="feature-tags">
+                    <span class="tag">Modern Design</span>
+                    <span class="tag">Multiple Options</span>
+                    <span class="tag">Customizable</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Ready to Create Your Perfect Resume?</h2>
+            <p>Join thousands of professionals who have successfully landed their dream jobs with AI-powered resumes.</p>
+            <a href="/builder" class="btn btn-primary btn-large">
+                <i class="fas fa-rocket"></i>
+                Get Started Now
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
-

@@ -1324,3 +1324,13 @@ html {
         width: 100%;
     }
 }
+.btn-warning {
+    background: var(--warning);
+    color: var(--text-white);
+    border: 2px solid var(--warning);
+}
+
+.btn-warning:hover {
+    background: #d97706;
+    border-color: #d97706;
+}

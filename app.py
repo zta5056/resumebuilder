@@ -10,6 +10,10 @@ from reportlab.lib.units import inch
 from reportlab.lib import colors
 import io
 from datetime import datetime
+import PyPDF2
+import docx
+from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_production")
@@ -107,6 +111,57 @@ def reviewer():
             return render_template('reviewer.html', error=f"Error analyzing resume: {str(e)}")
     
     return render_template('reviewer.html')
+
+@app.route('/upload_resume', methods=['POST'])
+def upload_resume():
+    try:
+        if 'resume_file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['resume_file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Validate file type and size
+        allowed_extensions = {'.pdf', '.doc', '.docx'}
+        file_ext = os.path.splitext(secure_filename(file.filename))[1].lower()
+        
+        if file_ext not in allowed_extensions:
+            return jsonify({'error': 'Invalid file type. Please upload PDF, DOC, or DOCX files only.'}), 400
+        
+        # Check file size (5MB limit)
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        
+        if file_size > 5 * 1024 * 1024:
+            return jsonify({'error': 'File too large. Please upload files under 5MB.'}), 400
+        
+        # Extract text based on file type
+        text_content = ""
+        
+        if file_ext == '.pdf':
+            pdf_reader = PyPDF2.PdfReader(file)
+            for page in pdf_reader.pages:
+                text_content += page.extract_text() + "\n"
+                
+        elif file_ext in ['.doc', '.docx']:
+            doc = docx.Document(file)
+            for paragraph in doc.paragraphs:
+                text_content += paragraph.text + "\n"
+        
+        if not text_content.strip():
+            return jsonify({'error': 'Could not extract text from the file. Please try a different file or paste the text manually.'}), 400
+        
+        return jsonify({
+            'status': 'success',
+            'text': text_content.strip(),
+            'filename': secure_filename(file.filename)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Error processing file: {str(e)}'}), 500
+
 
 @app.route('/ai_suggest', methods=['POST'])
 def ai_suggest():

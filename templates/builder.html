@@ -8,9 +8,9 @@
         <div class="template-selector">
             <label for="template-select">Template: </label>
             <select id="template-select">
-                <option value="classic" {{ 'selected' if selected_template == 'classic' else '' }}>Classic Professional</option>
-                <option value="modern" {{ 'selected' if selected_template == 'modern' else '' }}>Modern Professional</option>
-                <option value="creative" {{ 'selected' if selected_template == 'creative' else '' }}>Creative Professional</option>
+                <option value="classic" {% if selected_template == 'classic' %}selected{% endif %}>Classic Professional</option>
+                <option value="modern" {% if selected_template == 'modern' %}selected{% endif %}>Modern Professional</option>
+                <option value="creative" {% if selected_template == 'creative' %}selected{% endif %}>Creative Professional</option>
             </select>
         </div>
     </div>
@@ -24,26 +24,26 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="name">Full Name *</label>
-                            <input type="text" id="name" required value="{{ resume_data.personal_info.name if resume_data.personal_info else '' }}">
+                            <input type="text" id="name" required value="{% if resume_data.personal_info %}{{ resume_data.personal_info.name }}{% endif %}">
                         </div>
                         <div class="form-group">
                             <label for="title">Target Job Title</label>
-                            <input type="text" id="title" placeholder="e.g., Software Engineer" value="{{ resume_data.personal_info.title if resume_data.personal_info else '' }}">
+                            <input type="text" id="title" placeholder="e.g., Software Engineer" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.title }}{% endif %}">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="email">Email Address *</label>
-                            <input type="email" id="email" required value="{{ resume_data.personal_info.email if resume_data.personal_info else '' }}">
+                            <input type="email" id="email" required value="{% if resume_data.personal_info %}{{ resume_data.personal_info.email }}{% endif %}">
                         </div>
                         <div class="form-group">
                             <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" value="{{ resume_data.personal_info.phone if resume_data.personal_info else '' }}">
+                            <input type="tel" id="phone" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.phone }}{% endif %}">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="location">Location</label>
-                        <input type="text" id="location" placeholder="City, State" value="{{ resume_data.personal_info.location if resume_data.personal_info else '' }}">
+                        <input type="text" id="location" placeholder="City, State" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.location }}{% endif %}">
                     </div>
                 </div>
 
@@ -108,21 +108,4 @@
         </div>
     </div>
 </div>
-
-<script>
-// Set current template
-let currentTemplate = '{{ selected_template }}';
-
-// Template change handler
-document.getElementById('template-select').addEventListener('change', function() {
-    currentTemplate = this.value;
-    document.getElementById('resume-preview').className = `resume-preview ${currentTemplate}-template`;
-    updatePreview();
-});
-
-// Load saved data on page load
-document.addEventListener('DOMContentLoaded', function() {
-    updatePreview();
-});
-</script>
 {% endblock %}

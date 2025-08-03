@@ -1,6 +1,7 @@
 // Global variables
 let isProcessing = false;
 let resumeData = {};
+let currentTemplate = document.getElementById('template-select')?.value || 'classic';
 
 // Enhanced AI suggestion function with error handling
 async function getAISuggestion(section) {
@@ -71,11 +72,18 @@ async function getAISuggestion(section) {
     }
 }
 
-// Enhanced preview update function
+// Enhanced preview update function with template support
 function updatePreview() {
     try {
         const previewElement = document.getElementById('resume-preview');
         if (!previewElement) return;
+        
+        // Get current template
+        const templateSelect = document.getElementById('template-select');
+        currentTemplate = templateSelect ? templateSelect.value : currentTemplate;
+        
+        // Update preview class
+        previewElement.className = `resume-preview ${currentTemplate}-template`;
         
         // Collect all form data
         resumeData = {
@@ -87,67 +95,12 @@ function updatePreview() {
             summary: document.getElementById('summary-input')?.value || '',
             experience: document.getElementById('experience-input')?.value || '',
             education: document.getElementById('education-input')?.value || '',
-            skills: document.getElementById('skills-input')?.value || ''
+            skills: document.getElementById('skills-input')?.value || '',
+            template: currentTemplate
         };
         
-        // Generate HTML preview
-        let html = `
-            <div class="resume-header">
-                <h1>${escapeHtml(resumeData.name)}</h1>
-                ${resumeData.title ? `<div class="target-role">${escapeHtml(resumeData.title)}</div>` : ''}
-                <div class="contact-info">
-                    ${resumeData.email ? `<span>📧 ${escapeHtml(resumeData.email)}</span>` : ''}
-                    ${resumeData.phone ? `<span>📞 ${escapeHtml(resumeData.phone)}</span>` : ''}
-                    ${resumeData.location ? `<span>📍 ${escapeHtml(resumeData.location)}</span>` : ''}
-                </div>
-            </div>
-        `;
-        
-        if (resumeData.summary) {
-            html += `
-                <div class="resume-section">
-                    <h3>Professional Summary</h3>
-                    <p>${escapeHtml(resumeData.summary).replace(/\n/g, '<br>')}</p>
-                </div>
-            `;
-        }
-        
-        if (resumeData.experience) {
-            html += `
-                <div class="resume-section">
-                    <h3>Work Experience</h3>
-                    <div class="experience-entry">
-                        <p>${escapeHtml(resumeData.experience).replace(/\n/g, '<br>')}</p>
-                    </div>
-                </div>
-            `;
-        }
-        
-        if (resumeData.education) {
-            html += `
-                <div class="resume-section">
-                    <h3>Education</h3>
-                    <div class="education-entry">
-                        <p>${escapeHtml(resumeData.education).replace(/\n/g, '<br>')}</p>
-                    </div>
-                </div>
-            `;
-        }
-        
-        if (resumeData.skills) {
-            const skillsArray = resumeData.skills.split(',').map(s => s.trim()).filter(s => s);
-            if (skillsArray.length > 0) {
-                html += `
-                    <div class="resume-section">
-                        <h3>Skills</h3>
-                        <div class="skills-list">
-                            ${skillsArray.map(skill => `<span class="skill-tag">${escapeHtml(skill)}</span>`).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
+        // Generate HTML preview based on template
+        let html = generateTemplateHTML(resumeData, currentTemplate);
         previewElement.innerHTML = html;
         
     } catch (error) {
@@ -156,7 +109,71 @@ function updatePreview() {
     }
 }
 
-// Save resume data
+// Generate template-specific HTML
+function generateTemplateHTML(data, template) {
+    const baseHTML = `
+        <div class="resume-header ${template}-header">
+            <h1>${escapeHtml(data.name)}</h1>
+            ${data.title ? `<div class="target-role">${escapeHtml(data.title)}</div>` : ''}
+            <div class="contact-info">
+                ${data.email ? `<span>📧 ${escapeHtml(data.email)}</span>` : ''}
+                ${data.phone ? `<span>📞 ${escapeHtml(data.phone)}</span>` : ''}
+                ${data.location ? `<span>📍 ${escapeHtml(data.location)}</span>` : ''}
+            </div>
+        </div>
+    `;
+    
+    let sectionsHTML = '';
+    
+    if (data.summary) {
+        sectionsHTML += `
+            <div class="resume-section ${template}-section">
+                <h3>Professional Summary</h3>
+                <p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p>
+            </div>
+        `;
+    }
+    
+    if (data.experience) {
+        sectionsHTML += `
+            <div class="resume-section ${template}-section">
+                <h3>Work Experience</h3>
+                <div class="experience-entry">
+                    <p>${escapeHtml(data.experience).replace(/\n/g, '<br>')}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (data.education) {
+        sectionsHTML += `
+            <div class="resume-section ${template}-section">
+                <h3>Education</h3>
+                <div class="education-entry">
+                    <p>${escapeHtml(data.education).replace(/\n/g, '<br>')}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (data.skills) {
+        const skillsArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
+        if (skillsArray.length > 0) {
+            sectionsHTML += `
+                <div class="resume-section ${template}-section">
+                    <h3>Skills</h3>
+                    <div class="skills-list ${template}-skills">
+                        ${skillsArray.map(skill => `<span class="skill-tag ${template}-skill">${escapeHtml(skill)}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    return baseHTML + sectionsHTML;
+}
+
+// Save resume data with template
 async function saveResume() {
     try {
         showMessage('Saving resume...', 'info');
@@ -184,7 +201,7 @@ async function saveResume() {
     }
 }
 
-// Export to PDF
+// Export to PDF with template
 async function exportToPDF() {
     try {
         if (!resumeData.name || resumeData.name === 'Your Name') {
@@ -213,7 +230,7 @@ async function exportToPDF() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${resumeData.name.replace(' ', '_')}_Resume.pdf`;
+        a.download = `${resumeData.name.replace(' ', '_')}_Resume_${currentTemplate}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -299,6 +316,16 @@ function autoSave() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
+    // Template change handler
+    const templateSelect = document.getElementById('template-select');
+    if (templateSelect) {
+        templateSelect.addEventListener('change', function() {
+            currentTemplate = this.value;
+            updatePreview();
+            autoSave();
+        });
+    }
+    
     // Auto-update preview on input
     const inputs = document.querySelectorAll('input, textarea');
     inputs.forEach(input => {

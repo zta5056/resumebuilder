@@ -1,17 +1,122 @@
 // Global variables
 let isProcessing = false;
 let resumeData = {};
-let currentTemplate = document.getElementById('template-select')?.value || 'classic';
+let currentTemplate = 'classic';
 
-// Enhanced AI suggestion function with error handling
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
+    
+    // Initialize template selector
+    const templateSelect = document.getElementById('template-select');
+    if (templateSelect) {
+        currentTemplate = templateSelect.value;
+        console.log('Initial template:', currentTemplate);
+        
+        // Add template change event listener
+        templateSelect.addEventListener('change', function() {
+            console.log('Template changed to:', this.value);
+            currentTemplate = this.value;
+            const previewElement = document.getElementById('resume-preview');
+            if (previewElement) {
+                previewElement.className = `resume-preview ${currentTemplate}-template`;
+            }
+            updatePreview();
+            autoSave();
+        });
+    }
+    
+    // Initialize all input event listeners
+    const inputs = document.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            console.log('Input changed:', this.id);
+            updatePreview();
+            autoSave();
+        });
+        
+        // Clear error styling on focus
+        input.addEventListener('focus', function() {
+            this.style.borderColor = 'var(--primary)';
+        });
+    });
+    
+    // Initialize buttons
+    const exportBtn = document.getElementById('export-pdf-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportToPDF);
+    }
+    
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            if (validateForm()) {
+                saveResume();
+            }
+        });
+    }
+    
+    // Load saved data if available
+    loadSavedData();
+    
+    // Initial preview update
+    setTimeout(updatePreview, 100);
+});
+
+// Load saved resume data from server
+async function loadSavedData() {
+    try {
+        const response = await fetch('/get_resume_data');
+        const savedData = await response.json();
+        
+        if (savedData && Object.keys(savedData).length > 0) {
+            console.log('Loading saved data:', savedData);
+            
+            // Populate form fields
+            if (savedData.personal_info) {
+                const personalInfo = savedData.personal_info;
+                if (personalInfo.name) document.getElementById('name').value = personalInfo.name;
+                if (personalInfo.title) document.getElementById('title').value = personalInfo.title;
+                if (personalInfo.email) document.getElementById('email').value = personalInfo.email;
+                if (personalInfo.phone) document.getElementById('phone').value = personalInfo.phone;
+                if (personalInfo.location) document.getElementById('location').value = personalInfo.location;
+            }
+            
+            if (savedData.summary) document.getElementById('summary-input').value = savedData.summary;
+            if (savedData.experience) document.getElementById('experience-input').value = savedData.experience;
+            if (savedData.education) document.getElementById('education-input').value = savedData.education;
+            if (savedData.skills) document.getElementById('skills-input').value = savedData.skills;
+            
+            // Set template
+            if (savedData.template) {
+                currentTemplate = savedData.template;
+                const templateSelect = document.getElementById('template-select');
+                if (templateSelect) {
+                    templateSelect.value = currentTemplate;
+                }
+            }
+            
+            // Update preview with loaded data
+            updatePreview();
+        }
+    } catch (error) {
+        console.error('Error loading saved data:', error);
+    }
+}
+
+// Enhanced AI suggestion function
 async function getAISuggestion(section) {
-    if (isProcessing) return;
+    if (isProcessing) {
+        console.log('Already processing, skipping...');
+        return;
+    }
     
     const textarea = document.getElementById(section + '-input');
     const btn = textarea?.nextElementSibling;
     
     if (!textarea || !btn) {
         console.error(`Elements not found for section: ${section}`);
+        showMessage(`Error: Could not find form elements for ${section}`, 'error');
         return;
     }
     
@@ -72,17 +177,18 @@ async function getAISuggestion(section) {
     }
 }
 
-// Enhanced preview update function with template support
+// Enhanced preview update function with proper template support
 function updatePreview() {
     try {
+        console.log('Updating preview with template:', currentTemplate);
+        
         const previewElement = document.getElementById('resume-preview');
-        if (!previewElement) return;
+        if (!previewElement) {
+            console.error('Preview element not found');
+            return;
+        }
         
-        // Get current template
-        const templateSelect = document.getElementById('template-select');
-        currentTemplate = templateSelect ? templateSelect.value : currentTemplate;
-        
-        // Update preview class
+        // Update preview class with current template
         previewElement.className = `resume-preview ${currentTemplate}-template`;
         
         // Collect all form data
@@ -99,9 +205,11 @@ function updatePreview() {
             template: currentTemplate
         };
         
-        // Generate HTML preview based on template
-        let html = generateTemplateHTML(resumeData, currentTemplate);
+        // Generate HTML preview
+        const html = generateTemplateHTML(resumeData, currentTemplate);
         previewElement.innerHTML = html;
+        
+        console.log('Preview updated successfully');
         
     } catch (error) {
         console.error('Preview update error:', error);
@@ -109,71 +217,75 @@ function updatePreview() {
     }
 }
 
-// Generate template-specific HTML
+// Fixed template HTML generation
 function generateTemplateHTML(data, template) {
-    const baseHTML = `
-        <div class="resume-header ${template}-header">
-            <h1>${escapeHtml(data.name)}</h1>
-            ${data.title ? `<div class="target-role">${escapeHtml(data.title)}</div>` : ''}
-            <div class="contact-info">
-                ${data.email ? `<span>📧 ${escapeHtml(data.email)}</span>` : ''}
-                ${data.phone ? `<span>📞 ${escapeHtml(data.phone)}</span>` : ''}
-                ${data.location ? `<span>📍 ${escapeHtml(data.location)}</span>` : ''}
-            </div>
-        </div>
-    `;
-    
-    let sectionsHTML = '';
-    
-    if (data.summary) {
-        sectionsHTML += `
-            <div class="resume-section ${template}-section">
-                <h3>Professional Summary</h3>
-                <p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p>
-            </div>
-        `;
-    }
-    
-    if (data.experience) {
-        sectionsHTML += `
-            <div class="resume-section ${template}-section">
-                <h3>Work Experience</h3>
-                <div class="experience-entry">
-                    <p>${escapeHtml(data.experience).replace(/\n/g, '<br>')}</p>
+    try {
+        let html = `
+            <div class="resume-header ${template}-header">
+                <h1>${escapeHtml(data.name)}</h1>
+                ${data.title ? `<div class="target-role">${escapeHtml(data.title)}</div>` : ''}
+                <div class="contact-info">
+                    ${data.email ? `<span>📧 ${escapeHtml(data.email)}</span>` : ''}
+                    ${data.phone ? `<span>📞 ${escapeHtml(data.phone)}</span>` : ''}
+                    ${data.location ? `<span>📍 ${escapeHtml(data.location)}</span>` : ''}
                 </div>
             </div>
         `;
-    }
-    
-    if (data.education) {
-        sectionsHTML += `
-            <div class="resume-section ${template}-section">
-                <h3>Education</h3>
-                <div class="education-entry">
-                    <p>${escapeHtml(data.education).replace(/\n/g, '<br>')}</p>
-                </div>
-            </div>
-        `;
-    }
-    
-    if (data.skills) {
-        const skillsArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
-        if (skillsArray.length > 0) {
-            sectionsHTML += `
+        
+        if (data.summary) {
+            html += `
                 <div class="resume-section ${template}-section">
-                    <h3>Skills</h3>
-                    <div class="skills-list ${template}-skills">
-                        ${skillsArray.map(skill => `<span class="skill-tag ${template}-skill">${escapeHtml(skill)}</span>`).join('')}
+                    <h3>Professional Summary</h3>
+                    <p>${escapeHtml(data.summary).replace(/\n/g, '<br>')}</p>
+                </div>
+            `;
+        }
+        
+        if (data.experience) {
+            html += `
+                <div class="resume-section ${template}-section">
+                    <h3>Work Experience</h3>
+                    <div class="experience-entry">
+                        <p>${escapeHtml(data.experience).replace(/\n/g, '<br>')}</p>
                     </div>
                 </div>
             `;
         }
+        
+        if (data.education) {
+            html += `
+                <div class="resume-section ${template}-section">
+                    <h3>Education</h3>
+                    <div class="education-entry">
+                        <p>${escapeHtml(data.education).replace(/\n/g, '<br>')}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (data.skills) {
+            const skillsArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
+            if (skillsArray.length > 0) {
+                html += `
+                    <div class="resume-section ${template}-section">
+                        <h3>Skills</h3>
+                        <div class="skills-list ${template}-skills">
+                            ${skillsArray.map(skill => `<span class="skill-tag ${template}-skill">${escapeHtml(skill)}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        return html;
+        
+    } catch (error) {
+        console.error('Error generating template HTML:', error);
+        return '<p>Error generating preview</p>';
     }
-    
-    return baseHTML + sectionsHTML;
 }
 
-// Save resume data with template
+// Save resume data
 async function saveResume() {
     try {
         showMessage('Saving resume...', 'info');
@@ -201,7 +313,7 @@ async function saveResume() {
     }
 }
 
-// Export to PDF with template
+// Export to PDF
 async function exportToPDF() {
     try {
         if (!resumeData.name || resumeData.name === 'Your Name') {
@@ -246,6 +358,7 @@ async function exportToPDF() {
 
 // Utility functions
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -309,56 +422,11 @@ let autoSaveTimeout;
 function autoSave() {
     clearTimeout(autoSaveTimeout);
     autoSaveTimeout = setTimeout(() => {
-        updatePreview();
-        saveResume();
-    }, 2000);
+        if (resumeData.name && resumeData.name !== 'Your Name') {
+            saveResume();
+        }
+    }, 3000); // Save after 3 seconds of inactivity
 }
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Template change handler
-    const templateSelect = document.getElementById('template-select');
-    if (templateSelect) {
-        templateSelect.addEventListener('change', function() {
-            currentTemplate = this.value;
-            updatePreview();
-            autoSave();
-        });
-    }
-    
-    // Auto-update preview on input
-    const inputs = document.querySelectorAll('input, textarea');
-    inputs.forEach(input => {
-        input.addEventListener('input', () => {
-            updatePreview();
-            autoSave();
-        });
-        
-        // Clear error styling on focus
-        input.addEventListener('focus', () => {
-            input.style.borderColor = 'var(--primary)';
-        });
-    });
-    
-    // Export button
-    const exportBtn = document.getElementById('export-pdf-btn');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', exportToPDF);
-    }
-    
-    // Save button
-    const saveBtn = document.getElementById('save-btn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            if (validateForm()) {
-                saveResume();
-            }
-        });
-    }
-    
-    // Initial preview update
-    updatePreview();
-});
 
 // Make functions globally available
 window.getAISuggestion = getAISuggestion;

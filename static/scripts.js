@@ -58,6 +58,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Initialize clear button
+    const clearBtn = document.getElementById('clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearAllContent);
+    }
+    
     // Load saved data if available
     loadSavedData();
     
@@ -131,15 +137,15 @@ async function loadSavedData() {
 function clearAllContent() {
     if (confirm('Are you sure you want to clear all resume content? This action cannot be undone.')) {
         // Clear all form fields
-        document.getElementById('name').value = '';
-        document.getElementById('title').value = '';
-        document.getElementById('email').value = '';
-        document.getElementById('phone').value = '';
-        document.getElementById('location').value = '';
-        document.getElementById('summary-input').value = '';
-        document.getElementById('experience-input').value = '';
-        document.getElementById('education-input').value = '';
-        document.getElementById('skills-input').value = '';
+        if (document.getElementById('name')) document.getElementById('name').value = '';
+        if (document.getElementById('title')) document.getElementById('title').value = '';
+        if (document.getElementById('email')) document.getElementById('email').value = '';
+        if (document.getElementById('phone')) document.getElementById('phone').value = '';
+        if (document.getElementById('location')) document.getElementById('location').value = '';
+        if (document.getElementById('summary-input')) document.getElementById('summary-input').value = '';
+        if (document.getElementById('experience-input')) document.getElementById('experience-input').value = '';
+        if (document.getElementById('education-input')) document.getElementById('education-input').value = '';
+        if (document.getElementById('skills-input')) document.getElementById('skills-input').value = '';
         
         // Reset template to classic
         const templateSelect = document.getElementById('template-select');
@@ -176,21 +182,6 @@ async function clearSessionData() {
         console.error('Error clearing session data:', error);
     }
 }
-
-// Add to your DOMContentLoaded event listener:
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing code ...
-    
-    // Initialize clear button
-    const clearBtn = document.getElementById('clear-btn');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', clearAllContent);
-    }
-});
-
-// Make function globally available
-window.clearAllContent = clearAllContent;
-
 
 // Enhanced AI suggestion function
 async function getAISuggestion(section) {
@@ -529,7 +520,7 @@ function autoSave() {
         if (resumeData.name && resumeData.name !== 'Your Name') {
             saveResume();
         }
-    }, 3000); // Save after 3 seconds of inactivity
+    }, 3000);
 }
 
 // Make functions globally available
@@ -537,3 +528,4 @@ window.getAISuggestion = getAISuggestion;
 window.updatePreview = updatePreview;
 window.saveResume = saveResume;
 window.exportToPDF = exportToPDF;
+window.clearAllContent = clearAllContent;

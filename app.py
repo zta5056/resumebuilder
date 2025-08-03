@@ -68,14 +68,30 @@ def builder():
             return jsonify({'status': 'error', 'message': f'Error saving resume: {str(e)}'}), 500
     
     # Get template from URL parameter or session
-    selected_template = request.args.get('template', session.get('resume_data', {}).get('template', 'classic'))
+    selected_template = request.args.get('template', 'classic')
     
-    # Get saved resume data
+    # Get saved resume data - handle case where it might not exist
     saved_data = session.get('resume_data', {})
+    if not saved_data:
+        # Initialize empty structure if no saved data
+        saved_data = {
+            'personal_info': {'name': '', 'title': '', 'email': '', 'phone': '', 'location': ''},
+            'summary': '',
+            'experience': '',
+            'education': '',
+            'skills': '',
+            'template': selected_template
+        }
+    
+    # Update template if coming from URL parameter
+    if request.args.get('template'):
+        saved_data['template'] = selected_template
+        session['resume_data'] = saved_data
     
     return render_template('builder.html', 
                          selected_template=selected_template, 
                          resume_data=saved_data)
+
 
 @app.route('/get_resume_data', methods=['GET'])
 def get_resume_data():

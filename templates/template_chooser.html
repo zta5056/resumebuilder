@@ -1,22 +1,340 @@
 {% extends "base.html" %}
+{% block title %}Choose Template - AI Resume Builder{% endblock %}
 {% block content %}
-<h2>Select a Resume Template</h2>
-<div class="template-gallery">
-    <div class="template-card">
-        <h3>Classic</h3>
-        <div class="template-preview classic"></div>
-        <a href="/builder" class="btn">Choose</a>
+<div class="template-container">
+    <div class="template-header">
+        <h1>🎨 Choose Your Resume Template</h1>
+        <p>Select a professional template that matches your industry and personal style</p>
     </div>
-    <div class="template-card">
-        <h3>Modern</h3>
-        <div class="template-preview modern"></div>
-        <a href="/builder" class="btn">Choose</a>
+    
+    <div class="template-gallery">
+        <!-- Classic Template -->
+        <div class="template-card" data-template="classic">
+            <div class="template-preview classic-preview">
+                <div class="preview-header">
+                    <h4>John Doe</h4>
+                    <p>Software Engineer</p>
+                </div>
+                <div class="preview-section">
+                    <h5>Experience</h5>
+                    <div class="preview-line"></div>
+                    <div class="preview-line short"></div>
+                </div>
+                <div class="preview-section">
+                    <h5>Education</h5>
+                    <div class="preview-line"></div>
+                </div>
+                <div class="preview-section">
+                    <h5>Skills</h5>
+                    <div class="skill-tags">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="template-info">
+                <h3>Classic Professional</h3>
+                <p>Clean, traditional layout perfect for corporate environments and conservative industries.</p>
+                <div class="template-tags">
+                    <span class="tag">Corporate</span>
+                    <span class="tag">Traditional</span>
+                    <span class="tag">ATS-Friendly</span>
+                </div>
+                <a href="/builder?template=classic" class="btn btn-primary">Choose Template</a>
+            </div>
+        </div>
+
+        <!-- Modern Template -->
+        <div class="template-card" data-template="modern">
+            <div class="template-preview modern-preview">
+                <div class="preview-header modern-header">
+                    <h4>Jane Smith</h4>
+                    <p>Product Manager</p>
+                </div>
+                <div class="preview-section">
+                    <h5>Experience</h5>
+                    <div class="preview-line"></div>
+                    <div class="preview-line short"></div>
+                </div>
+                <div class="preview-section">
+                    <h5>Education</h5>
+                    <div class="preview-line"></div>
+                </div>
+                <div class="preview-section">
+                    <h5>Skills</h5>
+                    <div class="skill-tags modern-skills">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="template-info">
+                <h3>Modern Professional</h3>
+                <p>Contemporary design with subtle colors and modern typography for tech and creative roles.</p>
+                <div class="template-tags">
+                    <span class="tag">Tech</span>
+                    <span class="tag">Creative</span>
+                    <span class="tag">Modern</span>
+                </div>
+                <a href="/builder?template=modern" class="btn btn-primary">Choose Template</a>
+            </div>
+        </div>
+
+        <!-- Creative Template -->
+        <div class="template-card" data-template="creative">
+            <div class="template-preview creative-preview">
+                <div class="preview-header creative-header">
+                    <h4>Alex Johnson</h4>
+                    <p>UX Designer</p>
+                </div>
+                <div class="preview-section">
+                    <h5>Experience</h5>
+                    <div class="preview-line"></div>
+                    <div class="preview-line short"></div>
+                </div>
+                <div class="preview-section">
+                    <h5>Education</h5>
+                    <div class="preview-line"></div>
+                </div>
+                <div class="preview-section">
+                    <h5>Skills</h5>
+                    <div class="skill-tags creative-skills">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="template-info">
+                <h3>Creative Professional</h3>
+                <p>Stylish design with visual elements perfect for design, marketing, and creative industries.</p>
+                <div class="template-tags">
+                    <span class="tag">Design</span>
+                    <span class="tag">Marketing</span>
+                    <span class="tag">Creative</span>
+                </div>
+                <a href="/builder?template=creative" class="btn btn-primary">Choose Template</a>
+            </div>
+        </div>
     </div>
-    <div class="template-card">
-        <h3>Technical</h3>
-        <div class="template-preview tech"></div>
-        <a href="/builder" class="btn">Choose</a>
+    
+    <div class="template-footer">
+        <p>✨ Don't worry, you can switch templates anytime in the builder!</p>
+        <a href="/builder" class="btn btn-secondary">Skip Template Selection</a>
     </div>
 </div>
-{% endblock %}
 
+<style>
+/* Template Gallery Styles */
+.template-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.template-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.template-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.template-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.template-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.template-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary-light);
+}
+
+/* Template Previews */
+.template-preview {
+    height: 300px;
+    padding: 1.5rem;
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+.preview-header h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 0.3rem 0;
+    color: #1a1a1a;
+}
+
+.preview-header p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.preview-section {
+    margin-bottom: 1rem;
+}
+
+.preview-section h5 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.preview-line {
+    height: 8px;
+    background: #e5e5e5;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.preview-line.short {
+    width: 70%;
+}
+
+.skill-tags {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.skill-tags span {
+    height: 12px;
+    width: 40px;
+    background: #e5e5e5;
+    border-radius: 6px;
+}
+
+/* Classic Template Styling */
+.classic-preview {
+    border-top: 4px solid var(--primary);
+}
+
+.classic-preview .preview-header {
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.classic-preview .preview-section h5 {
+    color: var(--primary);
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.2rem;
+}
+
+/* Modern Template Styling */
+.modern-preview {
+    background: linear-gradient(135deg, #f8fafc 0%, #fff 100%);
+}
+
+.modern-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.modern-preview .preview-section h5 {
+    color: var(--primary-light);
+}
+
+.modern-skills span {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+}
+
+/* Creative Template Styling */
+.creative-preview {
+    background: linear-gradient(45deg, #fff 0%, #f8fafc 50%, #fff 100%);
+}
+
+.creative-header {
+    background: var(--accent);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    transform: skew(-2deg);
+    margin: -0.5rem -0.5rem 1rem -0.5rem;
+}
+
+.creative-header h4,
+.creative-header p {
+    transform: skew(2deg);
+}
+
+.creative-preview .preview-section h5 {
+    color: var(--accent);
+    position: relative;
+}
+
+.creative-preview .preview-section h5::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: var(--accent);
+}
+
+.creative-skills span {
+    background: linear-gradient(135deg, var(--accent) 0%, #67e8f9 100%);
+    border-radius: 12px;
+}
+
+/* Template Info */
+.template-info {
+    padding: 1.5rem;
+}
+
+.template-info h3 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.template-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.template-tags {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.template-footer {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.template-footer p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}

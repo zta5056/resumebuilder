@@ -92,6 +92,15 @@ def builder():
                          selected_template=selected_template, 
                          resume_data=saved_data)
 
+@app.route('/clear_session', methods=['POST'])
+def clear_session():
+    """Clear all resume data from session"""
+    try:
+        session.pop('resume_data', None)
+        session.pop('last_analysis', None)
+        return jsonify({'status': 'success', 'message': 'Session cleared successfully'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Error clearing session: {str(e)}'}), 500
 
 @app.route('/get_resume_data', methods=['GET'])
 def get_resume_data():

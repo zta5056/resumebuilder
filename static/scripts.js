@@ -248,11 +248,12 @@ function getElementValue(elementId) {
     return element ? element.value : '';
 }
 
-// Complete template HTML generation function
+// COMPLETE template HTML generation function
 function generateTemplateHTML(data, template) {
     try {
         console.log('Generating HTML for template:', template);
         
+        // Base header HTML
         let html = `
             <div class="resume-header ${template}-header">
                 <h1>${escapeHtml(data.name)}</h1>
@@ -265,6 +266,7 @@ function generateTemplateHTML(data, template) {
             </div>
         `;
         
+        // Professional Summary Section
         if (data.summary) {
             html += `
                 <div class="resume-section ${template}-section">
@@ -274,6 +276,7 @@ function generateTemplateHTML(data, template) {
             `;
         }
         
+        // Work Experience Section
         if (data.experience) {
             html += `
                 <div class="resume-section ${template}-section">
@@ -285,6 +288,7 @@ function generateTemplateHTML(data, template) {
             `;
         }
         
+        // Education Section
         if (data.education) {
             html += `
                 <div class="resume-section ${template}-section">
@@ -296,6 +300,7 @@ function generateTemplateHTML(data, template) {
             `;
         }
         
+        // Skills Section
         if (data.skills) {
             const skillsArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
             if (skillsArray.length > 0) {
@@ -310,11 +315,12 @@ function generateTemplateHTML(data, template) {
             }
         }
         
+        console.log('Generated HTML length:', html.length);
         return html;
         
     } catch (error) {
         console.error('Error generating template HTML:', error);
-        return '<p style="color: red;">Error generating preview</p>';
+        return '<p style="color: red; text-align: center; margin-top: 2rem;">Error generating preview. Please check the console for details.</p>';
     }
 }
 

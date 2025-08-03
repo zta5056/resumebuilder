@@ -5,7 +5,7 @@ let currentTemplate = 'classic';
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing...');
+    console.log('DOM loaded, initializing live preview...');
     
     // Initialize template selector
     const templateSelect = document.getElementById('template-select');
@@ -26,11 +26,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialize all input event listeners
+    // Initialize all input event listeners for live preview
     const inputs = document.querySelectorAll('input, textarea');
+    console.log('Found', inputs.length, 'input elements');
+    
     inputs.forEach(input => {
         input.addEventListener('input', function() {
-            console.log('Input changed:', this.id);
+            console.log('Input changed:', this.id, '- Value:', this.value.substring(0, 50) + '...');
             updatePreview();
             autoSave();
         });
@@ -59,8 +61,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved data if available
     loadSavedData();
     
-    // Initial preview update
-    setTimeout(updatePreview, 100);
+    // Initial preview update with delay to ensure DOM is ready
+    setTimeout(() => {
+        console.log('Running initial preview update...');
+        updatePreview();
+    }, 200);
 });
 
 // Load saved resume data from server
@@ -75,17 +80,35 @@ async function loadSavedData() {
             // Populate form fields
             if (savedData.personal_info) {
                 const personalInfo = savedData.personal_info;
-                if (personalInfo.name) document.getElementById('name').value = personalInfo.name;
-                if (personalInfo.title) document.getElementById('title').value = personalInfo.title;
-                if (personalInfo.email) document.getElementById('email').value = personalInfo.email;
-                if (personalInfo.phone) document.getElementById('phone').value = personalInfo.phone;
-                if (personalInfo.location) document.getElementById('location').value = personalInfo.location;
+                if (personalInfo.name && document.getElementById('name')) {
+                    document.getElementById('name').value = personalInfo.name;
+                }
+                if (personalInfo.title && document.getElementById('title')) {
+                    document.getElementById('title').value = personalInfo.title;
+                }
+                if (personalInfo.email && document.getElementById('email')) {
+                    document.getElementById('email').value = personalInfo.email;
+                }
+                if (personalInfo.phone && document.getElementById('phone')) {
+                    document.getElementById('phone').value = personalInfo.phone;
+                }
+                if (personalInfo.location && document.getElementById('location')) {
+                    document.getElementById('location').value = personalInfo.location;
+                }
             }
             
-            if (savedData.summary) document.getElementById('summary-input').value = savedData.summary;
-            if (savedData.experience) document.getElementById('experience-input').value = savedData.experience;
-            if (savedData.education) document.getElementById('education-input').value = savedData.education;
-            if (savedData.skills) document.getElementById('skills-input').value = savedData.skills;
+            if (savedData.summary && document.getElementById('summary-input')) {
+                document.getElementById('summary-input').value = savedData.summary;
+            }
+            if (savedData.experience && document.getElementById('experience-input')) {
+                document.getElementById('experience-input').value = savedData.experience;
+            }
+            if (savedData.education && document.getElementById('education-input')) {
+                document.getElementById('education-input').value = savedData.education;
+            }
+            if (savedData.skills && document.getElementById('skills-input')) {
+                document.getElementById('skills-input').value = savedData.skills;
+            }
             
             // Set template
             if (savedData.template) {
@@ -97,7 +120,7 @@ async function loadSavedData() {
             }
             
             // Update preview with loaded data
-            updatePreview();
+            setTimeout(updatePreview, 100);
         }
     } catch (error) {
         console.error('Error loading saved data:', error);
@@ -193,17 +216,19 @@ function updatePreview() {
         
         // Collect all form data
         resumeData = {
-            name: document.getElementById('name')?.value || 'Your Name',
-            title: document.getElementById('title')?.value || '',
-            email: document.getElementById('email')?.value || '',
-            phone: document.getElementById('phone')?.value || '',
-            location: document.getElementById('location')?.value || '',
-            summary: document.getElementById('summary-input')?.value || '',
-            experience: document.getElementById('experience-input')?.value || '',
-            education: document.getElementById('education-input')?.value || '',
-            skills: document.getElementById('skills-input')?.value || '',
+            name: getElementValue('name') || 'Your Name',
+            title: getElementValue('title') || '',
+            email: getElementValue('email') || '',
+            phone: getElementValue('phone') || '',
+            location: getElementValue('location') || '',
+            summary: getElementValue('summary-input') || '',
+            experience: getElementValue('experience-input') || '',
+            education: getElementValue('education-input') || '',
+            skills: getElementValue('skills-input') || '',
             template: currentTemplate
         };
+        
+        console.log('Resume data collected:', resumeData);
         
         // Generate HTML preview
         const html = generateTemplateHTML(resumeData, currentTemplate);
@@ -217,9 +242,17 @@ function updatePreview() {
     }
 }
 
-// Fixed template HTML generation
+// Helper function to safely get element values
+function getElementValue(elementId) {
+    const element = document.getElementById(elementId);
+    return element ? element.value : '';
+}
+
+// Complete template HTML generation function
 function generateTemplateHTML(data, template) {
     try {
+        console.log('Generating HTML for template:', template);
+        
         let html = `
             <div class="resume-header ${template}-header">
                 <h1>${escapeHtml(data.name)}</h1>
@@ -281,7 +314,7 @@ function generateTemplateHTML(data, template) {
         
     } catch (error) {
         console.error('Error generating template HTML:', error);
-        return '<p>Error generating preview</p>';
+        return '<p style="color: red;">Error generating preview</p>';
     }
 }
 

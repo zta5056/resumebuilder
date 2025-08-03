@@ -5,6 +5,14 @@
     <div class="builder-header">
         <h1>🤖 AI Resume Builder</h1>
         <p>Fill in your information and let AI enhance your content</p>
+        <div class="template-selector">
+            <label for="template-select">Template: </label>
+            <select id="template-select">
+                <option value="classic" {{ 'selected' if selected_template == 'classic' else '' }}>Classic Professional</option>
+                <option value="modern" {{ 'selected' if selected_template == 'modern' else '' }}>Modern Professional</option>
+                <option value="creative" {{ 'selected' if selected_template == 'creative' else '' }}>Creative Professional</option>
+            </select>
+        </div>
     </div>
     
     <div class="builder-layout">
@@ -16,26 +24,26 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="name">Full Name *</label>
-                            <input type="text" id="name" required>
+                            <input type="text" id="name" required value="{{ resume_data.personal_info.name if resume_data.personal_info else '' }}">
                         </div>
                         <div class="form-group">
                             <label for="title">Target Job Title</label>
-                            <input type="text" id="title" placeholder="e.g., Software Engineer">
+                            <input type="text" id="title" placeholder="e.g., Software Engineer" value="{{ resume_data.personal_info.title if resume_data.personal_info else '' }}">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="email">Email Address *</label>
-                            <input type="email" id="email" required>
+                            <input type="email" id="email" required value="{{ resume_data.personal_info.email if resume_data.personal_info else '' }}">
                         </div>
                         <div class="form-group">
                             <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone">
+                            <input type="tel" id="phone" value="{{ resume_data.personal_info.phone if resume_data.personal_info else '' }}">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="location">Location</label>
-                        <input type="text" id="location" placeholder="City, State">
+                        <input type="text" id="location" placeholder="City, State" value="{{ resume_data.personal_info.location if resume_data.personal_info else '' }}">
                     </div>
                 </div>
 
@@ -44,7 +52,7 @@
                     <h3>📝 Professional Summary</h3>
                     <div class="form-group ai-enhanced">
                         <label for="summary-input">Professional Summary</label>
-                        <textarea id="summary-input" rows="4" placeholder="Write a brief summary of your professional background and career goals..."></textarea>
+                        <textarea id="summary-input" rows="4" placeholder="Write a brief summary of your professional background and career goals...">{{ resume_data.summary if resume_data.summary else '' }}</textarea>
                         <button type="button" class="btn-ai" onclick="getAISuggestion('summary')">🤖 AI Suggest</button>
                     </div>
                 </div>
@@ -54,7 +62,7 @@
                     <h3>💼 Work Experience</h3>
                     <div class="form-group ai-enhanced">
                         <label for="experience-input">Work Experience</label>
-                        <textarea id="experience-input" rows="6" placeholder="Describe your work experience, including job titles, companies, dates, and key achievements..."></textarea>
+                        <textarea id="experience-input" rows="6" placeholder="Describe your work experience, including job titles, companies, dates, and key achievements...">{{ resume_data.experience if resume_data.experience else '' }}</textarea>
                         <button type="button" class="btn-ai" onclick="getAISuggestion('experience')">🤖 AI Suggest</button>
                     </div>
                 </div>
@@ -64,7 +72,7 @@
                     <h3>🎓 Education</h3>
                     <div class="form-group ai-enhanced">
                         <label for="education-input">Education</label>
-                        <textarea id="education-input" rows="4" placeholder="List your educational background, including degrees, schools, graduation dates, and relevant coursework..."></textarea>
+                        <textarea id="education-input" rows="4" placeholder="List your educational background, including degrees, schools, graduation dates, and relevant coursework...">{{ resume_data.education if resume_data.education else '' }}</textarea>
                         <button type="button" class="btn-ai" onclick="getAISuggestion('education')">🤖 AI Suggest</button>
                     </div>
                 </div>
@@ -74,7 +82,7 @@
                     <h3>🛠️ Skills</h3>
                     <div class="form-group ai-enhanced">
                         <label for="skills-input">Skills (separate with commas)</label>
-                        <textarea id="skills-input" rows="3" placeholder="List your technical and soft skills, separated by commas..."></textarea>
+                        <textarea id="skills-input" rows="3" placeholder="List your technical and soft skills, separated by commas...">{{ resume_data.skills if resume_data.skills else '' }}</textarea>
                         <button type="button" class="btn-ai" onclick="getAISuggestion('skills')">🤖 AI Suggest</button>
                     </div>
                 </div>
@@ -92,7 +100,7 @@
             <div class="preview-header">
                 <h3>📋 Live Preview</h3>
             </div>
-            <div class="resume-preview" id="resume-preview">
+            <div class="resume-preview {{ selected_template }}-template" id="resume-preview">
                 <p style="text-align: center; color: #64748b; margin-top: 2rem;">
                     Your resume preview will appear here as you fill in the form
                 </p>
@@ -101,11 +109,20 @@
     </div>
 </div>
 
-<!-- Loading Modal -->
-<div id="loading-modal" class="modal">
-    <div class="modal-content">
-        <div class="loader"></div>
-        <p>AI is enhancing your content...</p>
-    </div>
-</div>
+<script>
+// Set current template
+let currentTemplate = '{{ selected_template }}';
+
+// Template change handler
+document.getElementById('template-select').addEventListener('change', function() {
+    currentTemplate = this.value;
+    document.getElementById('resume-preview').className = `resume-preview ${currentTemplate}-template`;
+    updatePreview();
+});
+
+// Load saved data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+});
+</script>
 {% endblock %}

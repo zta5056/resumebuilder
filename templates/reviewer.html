@@ -70,8 +70,8 @@
                     <h3>📊 Resume Analysis Results</h3>
                     <div class="analysis-score">
                         <span class="score-label">Overall Score</span>
-                        <span class="score-value" id="overall-score">85</span>
-                        <span class="score-max">/100</span>
+                        <span class="score-value" id="overall-score">{{ feedback.split('OVERALL SCORE:')[1].split('/')[0].strip() if 'OVERALL SCORE:' in feedback else '8' }}</span>
+                        <span class="score-max">/10</span>
                     </div>
                 </div>
                 
@@ -79,15 +79,6 @@
                     <div class="feedback-section">
                         <h4>🤖 AI Feedback</h4>
                         <div class="feedback-text">{{ feedback }}</div>
-                    </div>
-                    
-                    <div class="action-items">
-                        <h4>✅ Recommended Actions</h4>
-                        <ul id="action-list">
-                            <li>Add more quantifiable achievements</li>
-                            <li>Include relevant industry keywords</li>
-                            <li>Improve formatting consistency</li>
-                        </ul>
                     </div>
                 </div>
                 
@@ -233,9 +224,36 @@ function analyzeAnother() {
     document.querySelector('.reviewer-container').scrollIntoView({ behavior: 'smooth' });
 }
 
-function downloadReport() {
-    // Implementation for downloading analysis report
-    showMessage('Download feature coming soon!', 'info');
+async function downloadReport() {
+    try {
+        showMessage('Generating report...', 'info');
+        
+        const response = await fetch('/download_report', {
+            method: 'GET'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate report');
+        }
+        
+        // Handle file download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Resume_Analysis_Report_${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showMessage('Report downloaded successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        showMessage(`Error downloading report: ${error.message}`, 'error');
+    }
 }
 
 function showMessage(message, type) {

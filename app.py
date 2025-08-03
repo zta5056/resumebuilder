@@ -13,7 +13,7 @@ from datetime import datetime
 import PyPDF2
 import docx
 from werkzeug.utils import secure_filename
-
+import json
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_production")
@@ -49,18 +49,39 @@ def builder():
             
             # Store in session with validation
             session['resume_data'] = {
-                'personal_info': resume_data.get('personal_info', {}),
+                'personal_info': {
+                    'name': resume_data.get('name', ''),
+                    'title': resume_data.get('title', ''),
+                    'email': resume_data.get('email', ''),
+                    'phone': resume_data.get('phone', ''),
+                    'location': resume_data.get('location', '')
+                },
                 'summary': resume_data.get('summary', ''),
-                'experience': resume_data.get('experience', []),
-                'education': resume_data.get('education', []),
-                'skills': resume_data.get('skills', []),
+                'experience': resume_data.get('experience', ''),
+                'education': resume_data.get('education', ''),
+                'skills': resume_data.get('skills', ''),
+                'template': resume_data.get('template', 'classic'),
                 'timestamp': datetime.now().isoformat()
             }
             return jsonify({'status': 'success', 'message': 'Resume saved successfully'})
         except Exception as e:
             return jsonify({'status': 'error', 'message': f'Error saving resume: {str(e)}'}), 500
     
-    return render_template('builder.html')
+    # Get template from URL parameter or session
+    selected_template = request.args.get('template', session.get('resume_data', {}).get('template', 'classic'))
+    
+    # Get saved resume data
+    saved_data = session.get('resume_data', {})
+    
+    return render_template('builder.html', 
+                         selected_template=selected_template, 
+                         resume_data=saved_data)
+
+@app.route('/get_resume_data', methods=['GET'])
+def get_resume_data():
+    """API endpoint to get saved resume data"""
+    resume_data = session.get('resume_data', {})
+    return jsonify(resume_data)
 
 @app.route('/reviewer', methods=['GET', 'POST'])
 def reviewer():
@@ -78,16 +99,29 @@ def reviewer():
             
             # Enhanced AI prompt for better review
             review_prompt = f"""
-            As an expert resume reviewer and ATS specialist, analyze this resume and provide:
-            
-            1. OVERALL SCORE (1-10): Rate the resume's effectiveness
-            2. ATS COMPATIBILITY: How well will it pass automated screening?
-            3. STRENGTHS: What works well in this resume
-            4. WEAKNESSES: Areas that need improvement
-            5. KEYWORD OPTIMIZATION: Missing keywords and suggestions
-            6. FORMATTING ISSUES: Any structural problems
-            7. ACTION ITEMS: 3-5 specific improvements to make
-            
+            As an expert resume reviewer and ATS specialist, analyze this resume and provide a detailed review in the following format:
+
+            OVERALL SCORE: [Score out of 10]
+
+            ATS COMPATIBILITY: [High/Medium/Low] - [Brief explanation]
+
+            STRENGTHS:
+            • [List 3-4 specific strengths]
+
+            WEAKNESSES:
+            • [List 3-4 areas for improvement]
+
+            KEYWORD OPTIMIZATION:
+            • [Missing keywords and suggestions]
+
+            FORMATTING ISSUES:
+            • [Any structural problems]
+
+            ACTION ITEMS:
+            1. [Specific improvement #1]
+            2. [Specific improvement #2]
+            3. [Specific improvement #3]
+
             Resume to analyze:
             {resume_text}
             """
@@ -103,6 +137,14 @@ def reviewer():
             )
             
             feedback = response.choices[0].message.content
+            
+            # Store analysis in session for download
+            session['last_analysis'] = {
+                'resume_text': resume_text,
+                'feedback': feedback,
+                'timestamp': datetime.now().isoformat()
+            }
+            
             return render_template('reviewer.html', feedback=feedback, resume_text=resume_text)
             
         except openai.APIError as e:
@@ -111,6 +153,86 @@ def reviewer():
             return render_template('reviewer.html', error=f"Error analyzing resume: {str(e)}")
     
     return render_template('reviewer.html')
+
+@app.route('/download_report', methods=['GET'])
+def download_report():
+    """Generate and download analysis report as PDF"""
+    try:
+        analysis = session.get('last_analysis')
+        if not analysis:
+            return jsonify({'error': 'No analysis found. Please analyze a resume first.'}), 404
+        
+        # Create PDF in memory
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=1*inch, bottomMargin=1*inch)
+        
+        # Styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'ReportTitle',
+            parent=styles['Heading1'],
+            fontSize=20,
+            textColor=colors.HexColor('#1e40af'),
+            alignment=1,  # Center
+            spaceAfter=20
+        )
+        
+        heading_style = ParagraphStyle(
+            'ReportHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            textColor=colors.HexColor('#1e40af'),
+            spaceAfter=10,
+            spaceBefore=15
+        )
+        
+        normal_style = ParagraphStyle(
+            'ReportNormal',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=6,
+            leftIndent=10
+        )
+        
+        # Build PDF content
+        story = []
+        
+        # Title
+        story.append(Paragraph("AI Resume Analysis Report", title_style))
+        story.append(Paragraph(f"Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Resume Text Section
+        story.append(Paragraph("ANALYZED RESUME", heading_style))
+        resume_text = analysis['resume_text'][:1000] + "..." if len(analysis['resume_text']) > 1000 else analysis['resume_text']
+        story.append(Paragraph(resume_text, normal_style))
+        story.append(Spacer(1, 20))
+        
+        # Analysis Section
+        story.append(Paragraph("DETAILED ANALYSIS", heading_style))
+        feedback_lines = analysis['feedback'].split('\n')
+        for line in feedback_lines:
+            if line.strip():
+                story.append(Paragraph(line.strip(), normal_style))
+        
+        story.append(Spacer(1, 30))
+        
+        # Footer
+        story.append(Paragraph("This report was generated by AI Resume Builder - Visit us for more tools!", styles['Italic']))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f"Resume_Analysis_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        return jsonify({'error': f'Error generating report: {str(e)}'}), 500
 
 @app.route('/upload_resume', methods=['POST'])
 def upload_resume():
@@ -161,7 +283,6 @@ def upload_resume():
         
     except Exception as e:
         return jsonify({'error': f'Error processing file: {str(e)}'}), 500
-
 
 @app.route('/ai_suggest', methods=['POST'])
 def ai_suggest():
@@ -245,31 +366,71 @@ def export_pdf():
         if not resume_data:
             return jsonify({'error': 'No resume data provided'}), 400
         
+        template = resume_data.get('template', 'classic')
+        
         # Create PDF in memory
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
         
-        # Styles
+        # Template-specific styles
         styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=18,
-            textColor=colors.HexColor('#1e40af'),
-            alignment=1,  # Center
-            spaceAfter=12
-        )
         
-        heading_style = ParagraphStyle(
-            'CustomHeading',
-            parent=styles['Heading2'],
-            fontSize=12,
-            textColor=colors.HexColor('#1e40af'),
-            spaceAfter=6,
-            borderWidth=1,
-            borderColor=colors.HexColor('#1e40af'),
-            borderPadding=3
-        )
+        if template == 'classic':
+            title_style = ParagraphStyle(
+                'ClassicTitle',
+                parent=styles['Heading1'],
+                fontSize=18,
+                textColor=colors.HexColor('#1e40af'),
+                alignment=1,
+                spaceAfter=12
+            )
+            heading_style = ParagraphStyle(
+                'ClassicHeading',
+                parent=styles['Heading2'],
+                fontSize=12,
+                textColor=colors.HexColor('#1e40af'),
+                spaceAfter=6,
+                borderWidth=1,
+                borderColor=colors.HexColor('#1e40af'),
+                borderPadding=3
+            )
+        elif template == 'modern':
+            title_style = ParagraphStyle(
+                'ModernTitle',
+                parent=styles['Heading1'],
+                fontSize=20,
+                textColor=colors.HexColor('#3b82f6'),
+                alignment=1,
+                spaceAfter=16
+            )
+            heading_style = ParagraphStyle(
+                'ModernHeading',
+                parent=styles['Heading2'],
+                fontSize=13,
+                textColor=colors.HexColor('#3b82f6'),
+                spaceAfter=8,
+                backColor=colors.HexColor('#eff6ff'),
+                borderPadding=5
+            )
+        else:  # creative
+            title_style = ParagraphStyle(
+                'CreativeTitle',
+                parent=styles['Heading1'],
+                fontSize=22,
+                textColor=colors.HexColor('#06b6d4'),
+                alignment=1,
+                spaceAfter=18
+            )
+            heading_style = ParagraphStyle(
+                'CreativeHeading',
+                parent=styles['Heading2'],
+                fontSize=14,
+                textColor=colors.HexColor('#06b6d4'),
+                spaceAfter=10,
+                leftIndent=10,
+                borderWidth=0,
+                borderColor=colors.HexColor('#06b6d4')
+            )
         
         normal_style = styles['Normal']
         normal_style.fontSize = 10
@@ -328,7 +489,7 @@ def export_pdf():
         return send_file(
             buffer,
             as_attachment=True,
-            download_name=f"{name.replace(' ', '_')}_Resume.pdf",
+            download_name=f"{name.replace(' ', '_')}_Resume_{template.title()}.pdf",
             mimetype='application/pdf'
         )
         

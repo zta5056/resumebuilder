@@ -127,6 +127,71 @@ async function loadSavedData() {
     }
 }
 
+// Clear all form content
+function clearAllContent() {
+    if (confirm('Are you sure you want to clear all resume content? This action cannot be undone.')) {
+        // Clear all form fields
+        document.getElementById('name').value = '';
+        document.getElementById('title').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('summary-input').value = '';
+        document.getElementById('experience-input').value = '';
+        document.getElementById('education-input').value = '';
+        document.getElementById('skills-input').value = '';
+        
+        // Reset template to classic
+        const templateSelect = document.getElementById('template-select');
+        if (templateSelect) {
+            templateSelect.value = 'classic';
+            currentTemplate = 'classic';
+        }
+        
+        // Clear session data
+        clearSessionData();
+        
+        // Update preview
+        updatePreview();
+        
+        showMessage('All content cleared successfully!', 'success');
+    }
+}
+
+// Clear session data on server
+async function clearSessionData() {
+    try {
+        const response = await fetch('/clear_session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            console.error('Failed to clear session data');
+        }
+    } catch (error) {
+        console.error('Error clearing session data:', error);
+    }
+}
+
+// Add to your DOMContentLoaded event listener:
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+    
+    // Initialize clear button
+    const clearBtn = document.getElementById('clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearAllContent);
+    }
+});
+
+// Make function globally available
+window.clearAllContent = clearAllContent;
+
+
 // Enhanced AI suggestion function
 async function getAISuggestion(section) {
     if (isProcessing) {

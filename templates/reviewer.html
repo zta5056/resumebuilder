@@ -1,15 +1,266 @@
 {% extends "base.html" %}
+{% block title %}AI Resume Reviewer - AI Resume Builder{% endblock %}
 {% block content %}
-<h2>AI Resume Reviewer</h2>
-<form method="POST">
-    <textarea name="resume_text" rows="14" cols="70" placeholder="Paste your resume content here">{{ resume_text or '' }}</textarea>
-    <button class="btn" type="submit">Review Resume</button>
-</form>
-{% if feedback %}
-<div class="review-feedback">
-    <h3>AI Feedback:</h3>
-    <pre>{{ feedback }}</pre>
-</div>
-{% endif %}
-{% endblock %}
+<div class="reviewer-container">
+    <div class="reviewer-header">
+        <h1>🤖 AI Resume Reviewer</h1>
+        <p>Get instant feedback on your resume with AI-powered analysis and ATS compatibility scoring</p>
+    </div>
+    
+    <div class="reviewer-layout">
+        <!-- Input Panel -->
+        <div class="input-panel">
+            <div class="upload-section">
+                <h3>📄 Submit Your Resume</h3>
+                
+                <!-- File Upload -->
+                <div class="file-upload-area" id="file-upload-area">
+                    <div class="upload-content">
+                        <div class="upload-icon">📎</div>
+                        <h4>Drop your resume here or click to upload</h4>
+                        <p>Supports PDF, DOC, DOCX files (max 5MB)</p>
+                        <input type="file" id="file-input" accept=".pdf,.doc,.docx" hidden>
+                        <button type="button" class="btn btn-outline" onclick="document.getElementById('file-input').click()">Choose File</button>
+                    </div>
+                    <div class="file-info" id="file-info" style="display: none;">
+                        <span class="file-name"></span>
+                        <button type="button" class="btn-remove" onclick="removeFile()">×</button>
+                    </div>
+                </div>
+                
+                <!-- Text Input Alternative -->
+                <div class="text-input-section">
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <form method="POST" id="review-form">
+                        <div class="form-group">
+                            <label for="resume_text">Paste your resume text:</label>
+                            <textarea name="resume_text" id="resume_text" rows="12" placeholder="Copy and paste your resume content here...">{{ resume_text or '' }}</textarea>
+                            <div class="char-counter">
+                                <span id="char-count">0</span> characters
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="analyze-btn">
+                                🔍 Analyze Resume
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                                🗑️ Clear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
+        <!-- Results Panel -->
+        <div class="results-panel">
+            {% if error %}
+            <div class="error-message">
+                <div class="error-icon">⚠️</div>
+                <h4>Analysis Error</h4>
+                <p>{{ error }}</p>
+            </div>
+            {% elif feedback %}
+            <div class="feedback-container">
+                <div class="feedback-header">
+                    <h3>📊 Resume Analysis Results</h3>
+                    <div class="analysis-score">
+                        <span class="score-label">Overall Score</span>
+                        <span class="score-value" id="overall-score">85</span>
+                        <span class="score-max">/100</span>
+                    </div>
+                </div>
+                
+                <div class="feedback-content">
+                    <div class="feedback-section">
+                        <h4>🤖 AI Feedback</h4>
+                        <div class="feedback-text">{{ feedback }}</div>
+                    </div>
+                    
+                    <div class="action-items">
+                        <h4>✅ Recommended Actions</h4>
+                        <ul id="action-list">
+                            <li>Add more quantifiable achievements</li>
+                            <li>Include relevant industry keywords</li>
+                            <li>Improve formatting consistency</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="feedback-actions">
+                    <button type="button" class="btn btn-primary" onclick="downloadReport()">
+                        📥 Download Report
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="analyzeAnother()">
+                        🔄 Analyze Another
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="placeholder-content">
+                <div class="placeholder-icon">📋</div>
+                <h3>Ready to analyze your resume</h3>
+                <p>Upload a file or paste your resume text to get started with AI-powered feedback and scoring.</p>
+                
+                <div class="features-preview">
+                    <div class="feature-item">
+                        <span class="feature-icon">🎯</span>
+                        <span>ATS Compatibility Check</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📈</span>
+                        <span>Performance Scoring</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">💡</span>
+                        <span>Improvement Suggestions</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🔍</span>
+                        <span>Keyword Optimization</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// File upload functionality
+document.getElementById('file-input').addEventListener('change', handleFileSelect);
+document.getElementById('file-upload-area').addEventListener('dragover', handleDragOver);
+document.getElementById('file-upload-area').addEventListener('drop', handleFileDrop);
+document.getElementById('resume_text').addEventListener('input', updateCharCount);
+
+// Character counter
+function updateCharCount() {
+    const textarea = document.getElementById('resume_text');
+    const counter = document.getElementById('char-count');
+    counter.textContent = textarea.value.length;
+}
+
+// File handling functions
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) processFile(file);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleFileDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+}
+
+function processFile(file) {
+    // Validate file
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    
+    if (file.size > maxSize) {
+        showMessage('File too large. Please select a file under 5MB.', 'error');
+        return;
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+        showMessage('Invalid file type. Please upload PDF, DOC, or DOCX files only.', 'error');
+        return;
+    }
+    
+    // Show file info
+    document.querySelector('.upload-content').style.display = 'none';
+    document.getElementById('file-info').style.display = 'flex';
+    document.querySelector('.file-name').textContent = file.name;
+    
+    // Upload file for processing
+    uploadFile(file);
+}
+
+function removeFile() {
+    document.getElementById('file-input').value = '';
+    document.querySelector('.upload-content').style.display = 'block';
+    document.getElementById('file-info').style.display = 'none';
+    document.getElementById('resume_text').value = '';
+    updateCharCount();
+}
+
+async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('resume_file', file);
+    
+    try {
+        showMessage('Processing file...', 'info');
+        
+        const response = await fetch('/upload_resume', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('resume_text').value = data.text;
+            updateCharCount();
+            showMessage('File processed successfully! You can now analyze it.', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to process file');
+        }
+    } catch (error) {
+        showMessage(`Error processing file: ${error.message}`, 'error');
+        removeFile();
+    }
+}
+
+function clearForm() {
+    document.getElementById('resume_text').value = '';
+    updateCharCount();
+    removeFile();
+}
+
+function analyzeAnother() {
+    clearForm();
+    // Scroll to top
+    document.querySelector('.reviewer-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function downloadReport() {
+    // Implementation for downloading analysis report
+    showMessage('Download feature coming soon!', 'info');
+}
+
+function showMessage(message, type) {
+    // Remove existing messages
+    const existingMessages = document.querySelectorAll('.status-message');
+    existingMessages.forEach(msg => msg.remove());
+    
+    // Create new message
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `status-message ${type}`;
+    messageDiv.textContent = message;
+    
+    // Insert at top of container
+    const container = document.querySelector('.reviewer-container');
+    container.insertBefore(messageDiv, container.firstChild);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize character counter
+updateCharCount();
+</script>
+{% endblock %}

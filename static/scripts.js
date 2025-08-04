@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Load saved resume data from server
+// Updated loadSavedData function
 async function loadSavedData() {
     try {
         const response = await fetch('/get_resume_data');
@@ -106,9 +107,12 @@ async function loadSavedData() {
             if (savedData.summary && document.getElementById('summary-input')) {
                 document.getElementById('summary-input').value = savedData.summary;
             }
-            if (savedData.experience && document.getElementById('experience-input')) {
-                document.getElementById('experience-input').value = savedData.experience;
+            
+            // Load experience entries (new dynamic format)
+            if (savedData.experience) {
+                loadExperienceEntries(savedData.experience);
             }
+            
             if (savedData.education && document.getElementById('education-input')) {
                 document.getElementById('education-input').value = savedData.education;
             }
@@ -270,7 +274,7 @@ function updatePreview() {
         // Update preview class with current template
         previewElement.className = `resume-preview ${currentTemplate}-template`;
         
-        // Collect all form data
+        // Collect all form data including dynamic experience
         resumeData = {
             name: getElementValue('name') || 'Your Name',
             title: getElementValue('title') || '',
@@ -278,7 +282,7 @@ function updatePreview() {
             phone: getElementValue('phone') || '',
             location: getElementValue('location') || '',
             summary: getElementValue('summary-input') || '',
-            experience: getElementValue('experience-input') || '',
+            experience: getExperienceData(), // Now returns array
             education: getElementValue('education-input') || '',
             skills: getElementValue('skills-input') || '',
             template: currentTemplate
@@ -305,6 +309,7 @@ function getElementValue(elementId) {
 }
 
 // COMPLETE template HTML generation function
+// Updated generateTemplateHTML function - replace the experience section part
 function generateTemplateHTML(data, template) {
     try {
         console.log('Generating HTML for template:', template);
@@ -332,16 +337,55 @@ function generateTemplateHTML(data, template) {
             `;
         }
         
-        // Work Experience Section
-        if (data.experience) {
-            html += `
-                <div class="resume-section ${template}-section">
-                    <h3>Work Experience</h3>
-                    <div class="experience-entry">
-                        <p>${escapeHtml(data.experience).replace(/\n/g, '<br>')}</p>
-                    </div>
-                </div>
-            `;
+        // Work Experience Section - UPDATED for dynamic entries
+        if (data.experience && Array.isArray(data.experience) && data.experience.length > 0) {
+            html += `<div class="resume-section ${template}-section">
+                <h3>Work Experience</h3>`;
+            
+            data.experience.forEach(exp => {
+                if (exp.company || exp.position) {
+                    html += `<div class="experience-entry">`;
+                    
+                    // Position and Company
+                    if (exp.position || exp.company) {
+                        html += `<div class="exp-header">
+                            <h4>${escapeHtml(exp.position || 'Position')}</h4>
+                            <span class="company">${escapeHtml(exp.company || 'Company')}</span>
+                        </div>`;
+                    }
+                    
+                    // Dates and Location
+                    let dateLocation = [];
+                    if (exp.startDate || exp.endDate || exp.current) {
+                        let dateRange = '';
+                        if (exp.startDate) {
+                            const startDate = new Date(exp.startDate + '-01');
+                            dateRange += startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                        }
+                        if (exp.current) {
+                            dateRange += ' - Present';
+                        } else if (exp.endDate) {
+                            const endDate = new Date(exp.endDate + '-01');
+                            dateRange += ' - ' + endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                        }
+                        if (dateRange) dateLocation.push(dateRange);
+                    }
+                    if (exp.location) dateLocation.push(exp.location);
+                    
+                    if (dateLocation.length > 0) {
+                        html += `<div class="exp-dates">${dateLocation.join(' | ')}</div>`;
+                    }
+                    
+                    // Description
+                    if (exp.description) {
+                        html += `<div class="exp-description">${escapeHtml(exp.description).replace(/\n/g, '<br>')}</div>`;
+                    }
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            html += `</div>`;
         }
         
         // Education Section
@@ -379,6 +423,7 @@ function generateTemplateHTML(data, template) {
         return '<p style="color: red; text-align: center; margin-top: 2rem;">Error generating preview. Please check the console for details.</p>';
     }
 }
+
 
 // Save resume data
 async function saveResume() {

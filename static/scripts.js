@@ -453,15 +453,20 @@ async function saveResume() {
     }
 }
 
-// Export to PDF
+// Export to PDF - FIXED VERSION
 async function exportToPDF() {
     try {
-        if (!resumeData.name || resumeData.name === 'Your Name') {
+        // Ensure we have current data before export
+        updatePreview();
+        
+        if (!resumeData.name || resumeData.name === 'Your Name' || !resumeData.name.trim()) {
             showMessage('Please fill in your name before exporting', 'warning');
             return;
         }
         
         showMessage('Generating PDF...', 'info');
+        
+        console.log('Exporting resume data:', resumeData); // Debug log
         
         const response = await fetch('/export_pdf', {
             method: 'POST',
@@ -473,8 +478,8 @@ async function exportToPDF() {
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to generate PDF');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Server error: ${response.status}`);
         }
         
         // Handle file download
@@ -482,7 +487,7 @@ async function exportToPDF() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${resumeData.name.replace(' ', '_')}_Resume_${currentTemplate}.pdf`;
+        a.download = `${resumeData.name.replace(/[^a-zA-Z0-9]/g, '_')}_Resume_${currentTemplate}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -620,14 +625,25 @@ function addExperienceEntry(data = null) {
     if (companyInput) companyInput.focus();
 }
 
-// Generate HTML for experience entry
+// Generate HTML for experience entry - FIXED undefined values
 function generateExperienceEntryHTML(entryId, data, index) {
+    // Ensure all data properties exist with default empty strings
+    const safeData = {
+        company: data.company || '',
+        position: data.position || '',
+        location: data.location || '',
+        startDate: data.startDate || '',
+        endDate: data.endDate || '',
+        current: data.current || false,
+        description: data.description || ''
+    };
+    
     return `
         <div class="experience-entry" id="${entryId}">
             <div class="experience-header">
                 <div class="experience-number">${index}</div>
                 <h4 class="experience-title">
-                    ${data.company || data.position || 'New Experience'}
+                    ${safeData.company || safeData.position || 'New Experience'}
                 </h4>
                 <button type="button" class="remove-experience-btn" onclick="removeExperienceEntry('${entryId}')">
                     ✕
@@ -637,18 +653,18 @@ function generateExperienceEntryHTML(entryId, data, index) {
             <div class="form-row">
                 <div class="form-group">
                     <label for="${entryId}-company">Company *</label>
-                    <input type="text" id="${entryId}-company" value="${data.company}" required>
+                    <input type="text" id="${entryId}-company" value="${safeData.company}" required>
                 </div>
                 <div class="form-group">
                     <label for="${entryId}-position">Position *</label>
-                    <input type="text" id="${entryId}-position" value="${data.position}" required>
+                    <input type="text" id="${entryId}-position" value="${safeData.position}" required>
                 </div>
             </div>
             
             <div class="form-row">
                 <div class="form-group">
                     <label for="${entryId}-location">Location</label>
-                    <input type="text" id="${entryId}-location" value="${data.location}" placeholder="City, State">
+                    <input type="text" id="${entryId}-location" value="${safeData.location}" placeholder="City, State">
                 </div>
             </div>
             
@@ -657,14 +673,14 @@ function generateExperienceEntryHTML(entryId, data, index) {
                 <div class="date-range">
                     <div class="form-group">
                         <label for="${entryId}-start-date">Start Date</label>
-                        <input type="month" id="${entryId}-start-date" value="${data.startDate}">
+                        <input type="month" id="${entryId}-start-date" value="${safeData.startDate}">
                     </div>
                     <div class="form-group">
                         <label for="${entryId}-end-date">End Date</label>
-                        <input type="month" id="${entryId}-end-date" value="${data.endDate}" ${data.current ? 'disabled' : ''}>
+                        <input type="month" id="${entryId}-end-date" value="${safeData.endDate}" ${safeData.current ? 'disabled' : ''}>
                     </div>
                     <div class="current-position">
-                        <input type="checkbox" id="${entryId}-current" ${data.current ? 'checked' : ''}>
+                        <input type="checkbox" id="${entryId}-current" ${safeData.current ? 'checked' : ''}>
                         <label for="${entryId}-current">Current Position</label>
                     </div>
                 </div>
@@ -672,12 +688,13 @@ function generateExperienceEntryHTML(entryId, data, index) {
             
             <div class="form-group ai-enhanced">
                 <label for="${entryId}-description">Key Achievements & Responsibilities</label>
-                <textarea id="${entryId}-description" rows="4" placeholder="• Led team of 5 developers to deliver projects 20% ahead of schedule&#10;• Implemented new system that increased efficiency by 30%&#10;• Managed $2M budget and reduced costs by 15%">${data.description}</textarea>
+                <textarea id="${entryId}-description" rows="4" placeholder="• Led team of 5 developers to deliver projects 20% ahead of schedule&#10;• Implemented new system that increased efficiency by 30%&#10;• Managed $2M budget and reduced costs by 15%">${safeData.description}</textarea>
                 <button type="button" class="btn-ai" onclick="getExperienceAISuggestion('${entryId}')">🤖 AI Suggest</button>
             </div>
         </div>
     `;
 }
+
 
 // Add event listeners for experience entry
 function addExperienceEventListeners(entryId) {

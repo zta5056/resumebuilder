@@ -523,9 +523,344 @@ function autoSave() {
     }, 3000);
 }
 
+// Experience management
+let experienceEntries = [];
+let experienceCounter = 0;
+
+// Initialize experience section
+function initializeExperienceSection() {
+    const container = document.getElementById('experience-container');
+    const addBtn = document.getElementById('add-experience-btn');
+    
+    if (!container || !addBtn) return;
+    
+    addBtn.addEventListener('click', addExperienceEntry);
+    
+    // Add first entry by default
+    if (experienceEntries.length === 0) {
+        addExperienceEntry();
+    }
+}
+
+// Add new experience entry
+function addExperienceEntry(data = null) {
+    experienceCounter++;
+    const entryId = `experience-${experienceCounter}`;
+    
+    const entryData = data || {
+        company: '',
+        position: '',
+        location: '',
+        startDate: '',
+        endDate: '',
+        current: false,
+        description: ''
+    };
+    
+    experienceEntries.push({ id: entryId, ...entryData });
+    
+    const container = document.getElementById('experience-container');
+    const entryHTML = generateExperienceEntryHTML(entryId, entryData, experienceEntries.length);
+    
+    container.insertAdjacentHTML('beforeend', entryHTML);
+    
+    // Add event listeners for the new entry
+    addExperienceEventListeners(entryId);
+    
+    // Update preview
+    updatePreview();
+    
+    // Focus on company field of new entry
+    const companyInput = document.getElementById(`${entryId}-company`);
+    if (companyInput) companyInput.focus();
+}
+
+// Generate HTML for experience entry
+function generateExperienceEntryHTML(entryId, data, index) {
+    return `
+        <div class="experience-entry" id="${entryId}">
+            <div class="experience-header">
+                <div class="experience-number">${index}</div>
+                <h4 class="experience-title">
+                    ${data.company || data.position || 'New Experience'}
+                </h4>
+                <button type="button" class="remove-experience-btn" onclick="removeExperienceEntry('${entryId}')">
+                    ✕
+                </button>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="${entryId}-company">Company *</label>
+                    <input type="text" id="${entryId}-company" value="${data.company}" required>
+                </div>
+                <div class="form-group">
+                    <label for="${entryId}-position">Position *</label>
+                    <input type="text" id="${entryId}-position" value="${data.position}" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="${entryId}-location">Location</label>
+                    <input type="text" id="${entryId}-location" value="${data.location}" placeholder="City, State">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Employment Period</label>
+                <div class="date-range">
+                    <div class="form-group">
+                        <label for="${entryId}-start-date">Start Date</label>
+                        <input type="month" id="${entryId}-start-date" value="${data.startDate}">
+                    </div>
+                    <div class="form-group">
+                        <label for="${entryId}-end-date">End Date</label>
+                        <input type="month" id="${entryId}-end-date" value="${data.endDate}" ${data.current ? 'disabled' : ''}>
+                    </div>
+                    <div class="current-position">
+                        <input type="checkbox" id="${entryId}-current" ${data.current ? 'checked' : ''}>
+                        <label for="${entryId}-current">Current Position</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group ai-enhanced">
+                <label for="${entryId}-description">Key Achievements & Responsibilities</label>
+                <textarea id="${entryId}-description" rows="4" placeholder="• Led team of 5 developers to deliver projects 20% ahead of schedule&#10;• Implemented new system that increased efficiency by 30%&#10;• Managed $2M budget and reduced costs by 15%">${data.description}</textarea>
+                <button type="button" class="btn-ai" onclick="getExperienceAISuggestion('${entryId}')">🤖 AI Suggest</button>
+            </div>
+        </div>
+    `;
+}
+
+// Add event listeners for experience entry
+function addExperienceEventListeners(entryId) {
+    const inputs = document.querySelectorAll(`#${entryId} input, #${entryId} textarea`);
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updateExperienceEntry(entryId);
+            updateExperienceTitle(entryId);
+            updatePreview();
+            autoSave();
+        });
+        
+        input.addEventListener('focus', function() {
+            document.getElementById(entryId).classList.add('active');
+        });
+        
+        input.addEventListener('blur', function() {
+            document.getElementById(entryId).classList.remove('active');
+        });
+    });
+    
+    // Special handling for current position checkbox
+    const currentCheckbox = document.getElementById(`${entryId}-current`);
+    const endDateInput = document.getElementById(`${entryId}-end-date`);
+    
+    if (currentCheckbox && endDateInput) {
+        currentCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                endDateInput.disabled = true;
+                endDateInput.value = '';
+            } else {
+                endDateInput.disabled = false;
+            }
+            updateExperienceEntry(entryId);
+        });
+    }
+}
+
+// Update experience entry data
+function updateExperienceEntry(entryId) {
+    const entry = experienceEntries.find(e => e.id === entryId);
+    if (!entry) return;
+    
+    entry.company = document.getElementById(`${entryId}-company`)?.value || '';
+    entry.position = document.getElementById(`${entryId}-position`)?.value || '';
+    entry.location = document.getElementById(`${entryId}-location`)?.value || '';
+    entry.startDate = document.getElementById(`${entryId}-start-date`)?.value || '';
+    entry.endDate = document.getElementById(`${entryId}-end-date`)?.value || '';
+    entry.current = document.getElementById(`${entryId}-current`)?.checked || false;
+    entry.description = document.getElementById(`${entryId}-description`)?.value || '';
+}
+
+// Update experience entry title
+function updateExperienceTitle(entryId) {
+    const entry = experienceEntries.find(e => e.id === entryId);
+    const titleElement = document.querySelector(`#${entryId} .experience-title`);
+    
+    if (entry && titleElement) {
+        const title = entry.position && entry.company ? 
+            `${entry.position} at ${entry.company}` : 
+            entry.position || entry.company || 'New Experience';
+        titleElement.textContent = title;
+    }
+}
+
+// Remove experience entry
+function removeExperienceEntry(entryId) {
+    if (experienceEntries.length <= 1) {
+        showMessage('You must have at least one work experience entry.', 'warning');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to remove this experience entry?')) {
+        // Remove from array
+        experienceEntries = experienceEntries.filter(e => e.id !== entryId);
+        
+        // Remove from DOM
+        const entryElement = document.getElementById(entryId);
+        if (entryElement) {
+            entryElement.remove();
+        }
+        
+        // Update numbering
+        updateExperienceNumbering();
+        
+        // Update preview
+        updatePreview();
+        autoSave();
+        
+        showMessage('Experience entry removed successfully!', 'success');
+    }
+}
+
+// Update experience entry numbering
+function updateExperienceNumbering() {
+    const container = document.getElementById('experience-container');
+    const entries = container.querySelectorAll('.experience-entry');
+    
+    entries.forEach((entry, index) => {
+        const numberElement = entry.querySelector('.experience-number');
+        if (numberElement) {
+            numberElement.textContent = index + 1;
+        }
+    });
+}
+
+// AI suggestion for specific experience entry
+async function getExperienceAISuggestion(entryId) {
+    const entry = experienceEntries.find(e => e.id === entryId);
+    if (!entry) return;
+    
+    const textarea = document.getElementById(`${entryId}-description`);
+    const content = textarea.value.trim();
+    
+    if (!content) {
+        showMessage('Please enter some job responsibilities before requesting AI suggestions.', 'warning');
+        return;
+    }
+    
+    // Create context for AI
+    const context = `Position: ${entry.position || 'Professional Role'}\nCompany: ${entry.company || 'Company'}\nResponsibilities: ${content}`;
+    
+    try {
+        isProcessing = true;
+        textarea.disabled = true;
+        
+        showMessage('Getting AI suggestions for your experience...', 'info');
+        
+        const jobTitle = document.getElementById('title')?.value || entry.position || '';
+        
+        const response = await fetch('/ai_suggest', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ 
+                section: 'experience', 
+                content: context,
+                job_title: jobTitle
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || `Server error: ${response.status}`);
+        }
+        
+        if (data.suggestion) {
+            textarea.value = data.suggestion;
+            updateExperienceEntry(entryId);
+            updatePreview();
+            showMessage('AI suggestions applied successfully!', 'success');
+        }
+        
+    } catch (error) {
+        console.error('AI suggestion error:', error);
+        showMessage(`Error: ${error.message}`, 'error');
+    } finally {
+        isProcessing = false;
+        textarea.disabled = false;
+    }
+}
+
+// Load experience entries from saved data
+function loadExperienceEntries(savedExperience) {
+    // Clear existing entries
+    experienceEntries = [];
+    experienceCounter = 0;
+    const container = document.getElementById('experience-container');
+    if (container) container.innerHTML = '';
+    
+    if (Array.isArray(savedExperience) && savedExperience.length > 0) {
+        // Load from new format (array of objects)
+        savedExperience.forEach(exp => addExperienceEntry(exp));
+    } else if (typeof savedExperience === 'string' && savedExperience.trim()) {
+        // Convert from old format (single text)
+        addExperienceEntry({
+            company: '',
+            position: '',
+            location: '',
+            startDate: '',
+            endDate: '',
+            current: false,
+            description: savedExperience
+        });
+    } else {
+        // Add default empty entry
+        addExperienceEntry();
+    }
+}
+
+// Generate experience data for preview and saving
+function getExperienceData() {
+    return experienceEntries.map(entry => ({
+        company: entry.company,
+        position: entry.position,
+        location: entry.location,
+        startDate: entry.startDate,
+        endDate: entry.endDate,
+        current: entry.current,
+        description: entry.description
+    }));
+}
+
+// Update your existing DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+    
+    // Initialize experience section
+    initializeExperienceSection();
+    
+    // ... rest of existing code ...
+});
+
+// Make functions globally available
+window.addExperienceEntry = addExperienceEntry;
+window.removeExperienceEntry = removeExperienceEntry;
+window.getExperienceAISuggestion = getExperienceAISuggestion;
+
+
 // Make functions globally available
 window.getAISuggestion = getAISuggestion;
 window.updatePreview = updatePreview;
 window.saveResume = saveResume;
 window.exportToPDF = exportToPDF;
 window.clearAllContent = clearAllContent;
+
+

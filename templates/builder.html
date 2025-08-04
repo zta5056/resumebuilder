@@ -70,15 +70,19 @@
                     </div>
                 </div>
 
-                <!-- Education -->
+                <!-- Education - UPDATED to Dynamic -->
                 <div class="form-section">
                     <h3>🎓 Education</h3>
-                    <div class="form-group ai-enhanced">
-                        <label for="education-input">Education</label>
-                        <textarea id="education-input" rows="4" placeholder="List your educational background, including degrees, schools, graduation dates, and relevant coursework...">{{ resume_data.education if resume_data.education else '' }}</textarea>
-                        <button type="button" class="btn-ai" onclick="getAISuggestion('education')">🤖 AI Suggest</button>
+                    <div id="education-container">
+                        <!-- Education entries will be dynamically added here -->
+                    </div>
+                    <div class="education-actions">
+                        <button type="button" id="add-education-btn" class="btn btn-outline">
+                            ➕ Add Education
+                        </button>
                     </div>
                 </div>
+
 
                 <!-- Skills -->
                 <div class="form-section">

@@ -47,7 +47,7 @@ def builder():
             if not resume_data:
                 return jsonify({'status': 'error', 'message': 'No resume data provided'}), 400
             
-            # Store in session with validation - UPDATED to handle array experience
+            # Store in session with validation - UPDATED for dynamic sections
             session['resume_data'] = {
                 'personal_info': {
                     'name': resume_data.get('name', ''),
@@ -57,8 +57,8 @@ def builder():
                     'location': resume_data.get('location', '')
                 },
                 'summary': resume_data.get('summary', ''),
-                'experience': resume_data.get('experience', []),  # Now stores array
-                'education': resume_data.get('education', ''),
+                'experience': resume_data.get('experience', []),  # Array for dynamic entries
+                'education': resume_data.get('education', []),    # Array for dynamic entries
                 'skills': resume_data.get('skills', ''),
                 'template': resume_data.get('template', 'classic'),
                 'timestamp': datetime.now().isoformat()
@@ -77,8 +77,8 @@ def builder():
         saved_data = {
             'personal_info': {'name': '', 'title': '', 'email': '', 'phone': '', 'location': ''},
             'summary': '',
-            'experience': [],  # Initialize as empty array
-            'education': '',
+            'experience': [],  # Initialize as empty arrays
+            'education': [],
             'skills': '',
             'template': selected_template
         }

@@ -108,14 +108,15 @@ async function loadSavedData() {
                 document.getElementById('summary-input').value = savedData.summary;
             }
             
-            // Load experience entries (new dynamic format)
+            // Load dynamic sections
             if (savedData.experience) {
                 loadExperienceEntries(savedData.experience);
             }
             
-            if (savedData.education && document.getElementById('education-input')) {
-                document.getElementById('education-input').value = savedData.education;
+            if (savedData.education) {
+                loadEducationEntries(savedData.education);
             }
+            
             if (savedData.skills && document.getElementById('skills-input')) {
                 document.getElementById('skills-input').value = savedData.skills;
             }
@@ -187,7 +188,7 @@ async function clearSessionData() {
     }
 }
 
-// Enhanced AI suggestion function
+// Enhanced AI suggestion function with skills cleanup
 async function getAISuggestion(section) {
     if (isProcessing) {
         console.log('Already processing, skipping...');
@@ -218,7 +219,7 @@ async function getAISuggestion(section) {
         isProcessing = true;
         textarea.disabled = true;
         btn.disabled = true;
-        btn.innerHTML = '<span class="btn-loading">🤖</span> Thinking...';
+        btn.innerHTML = '🤖 Thinking...';
         
         const jobTitle = document.getElementById('title')?.value || '';
         
@@ -242,7 +243,14 @@ async function getAISuggestion(section) {
         }
         
         if (data.suggestion) {
-            textarea.value = data.suggestion;
+            let suggestion = data.suggestion;
+            
+            // Special processing for skills section
+            if (section === 'skills') {
+                suggestion = cleanupSkillsSuggestion(suggestion);
+            }
+            
+            textarea.value = suggestion;
             updatePreview();
             showMessage('AI suggestion applied successfully!', 'success');
         } else {
@@ -260,7 +268,24 @@ async function getAISuggestion(section) {
     }
 }
 
-// Enhanced preview update function with proper template support
+// Clean up skills suggestion to comma-separated format
+function cleanupSkillsSuggestion(suggestion) {
+    // Remove markdown headers and bullets
+    let cleaned = suggestion
+        .replace(/\*\*[^*]+\*\*:?\s*/g, '') // Remove **headers**
+        .replace(/^\s*[-•]\s*/gm, '') // Remove bullet points
+        .replace(/\n+/g, '\n') // Normalize line breaks
+        .trim();
+    
+    // Split into lines and filter out empty ones
+    const lines = cleaned.split('\n').filter(line => line.trim());
+    
+    // Join with commas
+    return lines.join(', ');
+}
+
+
+// Updated updatePreview function
 function updatePreview() {
     try {
         console.log('Updating preview with template:', currentTemplate);
@@ -274,7 +299,7 @@ function updatePreview() {
         // Update preview class with current template
         previewElement.className = `resume-preview ${currentTemplate}-template`;
         
-        // Collect all form data including dynamic experience
+        // Collect all form data including dynamic sections
         resumeData = {
             name: getElementValue('name') || 'Your Name',
             title: getElementValue('title') || '',
@@ -282,8 +307,8 @@ function updatePreview() {
             phone: getElementValue('phone') || '',
             location: getElementValue('location') || '',
             summary: getElementValue('summary-input') || '',
-            experience: getExperienceData(), // Now returns array
-            education: getElementValue('education-input') || '',
+            experience: getExperienceData(), // Dynamic array
+            education: getEducationData(), // Dynamic array
             skills: getElementValue('skills-input') || '',
             template: currentTemplate
         };
@@ -925,4 +950,317 @@ window.saveResume = saveResume;
 window.exportToPDF = exportToPDF;
 window.clearAllContent = clearAllContent;
 
+// Education management
+let educationEntries = [];
+let educationCounter = 0;
+
+// Initialize education section
+function initializeEducationSection() {
+    const container = document.getElementById('education-container');
+    const addBtn = document.getElementById('add-education-btn');
+    
+    if (!container || !addBtn) return;
+    
+    addBtn.addEventListener('click', addEducationEntry);
+    
+    // Add first entry by default
+    if (educationEntries.length === 0) {
+        addEducationEntry();
+    }
+}
+
+// Add new education entry
+function addEducationEntry(data = null) {
+    educationCounter++;
+    const entryId = `education-${educationCounter}`;
+    
+    const entryData = data || {
+        degree: '',
+        school: '',
+        location: '',
+        graduationDate: '',
+        gpa: '',
+        description: ''
+    };
+    
+    educationEntries.push({ id: entryId, ...entryData });
+    
+    const container = document.getElementById('education-container');
+    const entryHTML = generateEducationEntryHTML(entryId, entryData, educationEntries.length);
+    
+    container.insertAdjacentHTML('beforeend', entryHTML);
+    
+    // Add event listeners for the new entry
+    addEducationEventListeners(entryId);
+    
+    // Update preview
+    updatePreview();
+    
+    // Focus on degree field of new entry
+    const degreeInput = document.getElementById(`${entryId}-degree`);
+    if (degreeInput) degreeInput.focus();
+}
+
+// Generate HTML for education entry
+function generateEducationEntryHTML(entryId, data, index) {
+    // Ensure all data properties exist with default empty strings
+    const safeData = {
+        degree: data.degree || '',
+        school: data.school || '',
+        location: data.location || '',
+        graduationDate: data.graduationDate || '',
+        gpa: data.gpa || '',
+        description: data.description || ''
+    };
+    
+    return `
+        <div class="education-entry" id="${entryId}">
+            <div class="education-header">
+                <div class="education-number">${index}</div>
+                <h4 class="education-title">
+                    ${safeData.degree || safeData.school || 'New Education'}
+                </h4>
+                <button type="button" class="remove-education-btn" onclick="removeEducationEntry('${entryId}')">
+                    ✕
+                </button>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="${entryId}-degree">Degree *</label>
+                    <input type="text" id="${entryId}-degree" value="${safeData.degree}" placeholder="e.g., Bachelor of Science in Computer Science" required>
+                </div>
+                <div class="form-group">
+                    <label for="${entryId}-school">School *</label>
+                    <input type="text" id="${entryId}-school" value="${safeData.school}" placeholder="e.g., University of Technology" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="${entryId}-location">Location</label>
+                    <input type="text" id="${entryId}-location" value="${safeData.location}" placeholder="City, State">
+                </div>
+                <div class="form-group">
+                    <label for="${entryId}-graduation-date">Graduation Date</label>
+                    <input type="month" id="${entryId}-graduation-date" value="${safeData.graduationDate}">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="${entryId}-gpa">GPA (Optional)</label>
+                <div class="gpa-group">
+                    <input type="number" id="${entryId}-gpa" value="${safeData.gpa}" placeholder="3.75" min="0" max="4" step="0.01">
+                    <span class="gpa-note">Only include if 3.5+</span>
+                </div>
+            </div>
+            
+            <div class="form-group ai-enhanced">
+                <label for="${entryId}-description">Relevant Coursework, Honors & Achievements</label>
+                <textarea id="${entryId}-description" rows="3" placeholder="• Relevant coursework: Data Structures, Algorithms, Machine Learning&#10;• Dean's List (Fall 2022, Spring 2023)&#10;• Computer Science Club President">${safeData.description}</textarea>
+                <button type="button" class="btn-ai" onclick="getEducationAISuggestion('${entryId}')">🤖 AI Suggest</button>
+            </div>
+        </div>
+    `;
+}
+
+// Add event listeners for education entry
+function addEducationEventListeners(entryId) {
+    const inputs = document.querySelectorAll(`#${entryId} input, #${entryId} textarea`);
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updateEducationEntry(entryId);
+            updateEducationTitle(entryId);
+            updatePreview();
+            autoSave();
+        });
+        
+        input.addEventListener('focus', function() {
+            document.getElementById(entryId).classList.add('active');
+        });
+        
+        input.addEventListener('blur', function() {
+            document.getElementById(entryId).classList.remove('active');
+        });
+    });
+}
+
+// Update education entry data
+function updateEducationEntry(entryId) {
+    const entry = educationEntries.find(e => e.id === entryId);
+    if (!entry) return;
+    
+    entry.degree = document.getElementById(`${entryId}-degree`)?.value || '';
+    entry.school = document.getElementById(`${entryId}-school`)?.value || '';
+    entry.location = document.getElementById(`${entryId}-location`)?.value || '';
+    entry.graduationDate = document.getElementById(`${entryId}-graduation-date`)?.value || '';
+    entry.gpa = document.getElementById(`${entryId}-gpa`)?.value || '';
+    entry.description = document.getElementById(`${entryId}-description`)?.value || '';
+}
+
+// Update education entry title
+function updateEducationTitle(entryId) {
+    const entry = educationEntries.find(e => e.id === entryId);
+    const titleElement = document.querySelector(`#${entryId} .education-title`);
+    
+    if (entry && titleElement) {
+        const title = entry.degree && entry.school ? 
+            `${entry.degree} - ${entry.school}` : 
+            entry.degree || entry.school || 'New Education';
+        titleElement.textContent = title;
+    }
+}
+
+// Remove education entry
+function removeEducationEntry(entryId) {
+    if (educationEntries.length <= 1) {
+        showMessage('You must have at least one education entry.', 'warning');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to remove this education entry?')) {
+        // Remove from array
+        educationEntries = educationEntries.filter(e => e.id !== entryId);
+        
+        // Remove from DOM
+        const entryElement = document.getElementById(entryId);
+        if (entryElement) {
+            entryElement.remove();
+        }
+        
+        // Update numbering
+        updateEducationNumbering();
+        
+        // Update preview
+        updatePreview();
+        autoSave();
+        
+        showMessage('Education entry removed successfully!', 'success');
+    }
+}
+
+// Update education entry numbering
+function updateEducationNumbering() {
+    const container = document.getElementById('education-container');
+    const entries = container.querySelectorAll('.education-entry');
+    
+    entries.forEach((entry, index) => {
+        const numberElement = entry.querySelector('.education-number');
+        if (numberElement) {
+            numberElement.textContent = index + 1;
+        }
+    });
+}
+
+// AI suggestion for specific education entry
+async function getEducationAISuggestion(entryId) {
+    const entry = educationEntries.find(e => e.id === entryId);
+    if (!entry) return;
+    
+    const textarea = document.getElementById(`${entryId}-description`);
+    const content = textarea.value.trim();
+    
+    if (!content) {
+        showMessage('Please enter some coursework or achievements before requesting AI suggestions.', 'warning');
+        return;
+    }
+    
+    // Create context for AI
+    const context = `Degree: ${entry.degree || 'Degree'}\nSchool: ${entry.school || 'School'}\nCoursework/Achievements: ${content}`;
+    
+    try {
+        isProcessing = true;
+        textarea.disabled = true;
+        
+        showMessage('Getting AI suggestions for your education...', 'info');
+        
+        const response = await fetch('/ai_suggest', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ 
+                section: 'education', 
+                content: context,
+                job_title: document.getElementById('title')?.value || ''
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || `Server error: ${response.status}`);
+        }
+        
+        if (data.suggestion) {
+            textarea.value = data.suggestion;
+            updateEducationEntry(entryId);
+            updatePreview();
+            showMessage('AI suggestions applied successfully!', 'success');
+        }
+        
+    } catch (error) {
+        console.error('AI suggestion error:', error);
+        showMessage(`Error: ${error.message}`, 'error');
+    } finally {
+        isProcessing = false;
+        textarea.disabled = false;
+    }
+}
+
+// Get education data for preview and saving
+function getEducationData() {
+    return educationEntries.map(entry => ({
+        degree: entry.degree,
+        school: entry.school,
+        location: entry.location,
+        graduationDate: entry.graduationDate,
+        gpa: entry.gpa,
+        description: entry.description
+    }));
+}
+
+// Load education entries from saved data
+function loadEducationEntries(savedEducation) {
+    // Clear existing entries
+    educationEntries = [];
+    educationCounter = 0;
+    const container = document.getElementById('education-container');
+    if (container) container.innerHTML = '';
+    
+    if (Array.isArray(savedEducation) && savedEducation.length > 0) {
+        // Load from new format (array of objects)
+        savedEducation.forEach(edu => addEducationEntry(edu));
+    } else if (typeof savedEducation === 'string' && savedEducation.trim()) {
+        // Convert from old format (single text)
+        addEducationEntry({
+            degree: '',
+            school: '',
+            location: '',
+            graduationDate: '',
+            gpa: '',
+            description: savedEducation
+        });
+    } else {
+        // Add default empty entry
+        addEducationEntry();
+    }
+}
+
+// Add to your DOMContentLoaded event listener:
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+    
+    // Initialize education section
+    initializeEducationSection();
+    
+    // ... rest of existing code ...
+});
+
+// Make functions globally available
+window.addEducationEntry = addEducationEntry;
+window.removeEducationEntry = removeEducationEntry;
+window.getEducationAISuggestion = getEducationAISuggestion;
 

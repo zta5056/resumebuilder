@@ -391,16 +391,15 @@ def export_pdf():
         resume_data = request.json
         if not resume_data:
             return jsonify({'error': 'No resume data provided'}), 400
-        
+
         template = resume_data.get('template', 'classic')
-        
+
         # Create PDF in memory
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
-        
+
         # Template-specific styles
         styles = getSampleStyleSheet()
-        
         if template == 'classic':
             title_style = ParagraphStyle(
                 'ClassicTitle',
@@ -457,13 +456,13 @@ def export_pdf():
                 borderWidth=0,
                 borderColor=colors.HexColor('#06b6d4')
             )
-        
+
         normal_style = styles['Normal']
         normal_style.fontSize = 10
-        
+
         # Build PDF content
         story = []
-        
+
         # Header
         name = resume_data.get('name', 'Your Name')
         title = resume_data.get('title', '')
@@ -471,7 +470,7 @@ def export_pdf():
         if title:
             story.append(Paragraph(title, styles['Heading3']))
         story.append(Spacer(1, 12))
-        
+
         # Contact Info
         contact_info = []
         if resume_data.get('email'):
@@ -480,47 +479,123 @@ def export_pdf():
             contact_info.append(resume_data['phone'])
         if resume_data.get('location'):
             contact_info.append(resume_data['location'])
-        
         if contact_info:
             story.append(Paragraph(' | '.join(contact_info), normal_style))
-            story.append(Spacer(1, 12))
-        
+        story.append(Spacer(1, 12))
+
         # Summary
         if resume_data.get('summary'):
             story.append(Paragraph('PROFESSIONAL SUMMARY', heading_style))
             story.append(Paragraph(resume_data['summary'], normal_style))
             story.append(Spacer(1, 12))
-        
-        # Experience
-        if resume_data.get('experience'):
+
+        # Experience - UPDATED for dynamic entries
+        if resume_data.get('experience') and isinstance(resume_data['experience'], list):
             story.append(Paragraph('WORK EXPERIENCE', heading_style))
-            story.append(Paragraph(resume_data['experience'], normal_style))
-            story.append(Spacer(1, 12))
-        
-        # Education
-        if resume_data.get('education'):
+            for exp in resume_data['experience']:
+                if isinstance(exp, dict) and (exp.get('company') or exp.get('position')):
+                    # Position and Company
+                    if exp.get('position') and exp.get('company'):
+                        story.append(Paragraph(f"<b>{exp['position']}</b> - {exp['company']}", normal_style))
+                    elif exp.get('position'):
+                        story.append(Paragraph(f"<b>{exp['position']}</b>", normal_style))
+                    elif exp.get('company'):
+                        story.append(Paragraph(f"<b>{exp['company']}</b>", normal_style))
+                    
+                    # Dates and Location
+                    date_location = []
+                    if exp.get('startDate') or exp.get('endDate') or exp.get('current'):
+                        date_range = ''
+                        if exp.get('startDate'):
+                            try:
+                                start_date = datetime.strptime(exp['startDate'] + '-01', '%Y-%m-%d')
+                                date_range += start_date.strftime('%b %Y')
+                            except:
+                                date_range += exp['startDate']
+                        
+                        if exp.get('current'):
+                            date_range += ' - Present'
+                        elif exp.get('endDate'):
+                            try:
+                                end_date = datetime.strptime(exp['endDate'] + '-01', '%Y-%m-%d')
+                                date_range += ' - ' + end_date.strftime('%b %Y')
+                            except:
+                                date_range += ' - ' + exp['endDate']
+                        
+                        if date_range:
+                            date_location.append(date_range)
+                    
+                    if exp.get('location'):
+                        date_location.append(exp['location'])
+                    
+                    if date_location:
+                        story.append(Paragraph(' | '.join(date_location), normal_style))
+                    
+                    # Description
+                    if exp.get('description'):
+                        story.append(Paragraph(exp['description'], normal_style))
+                    
+                    story.append(Spacer(1, 8))
+            story.append(Spacer(1, 4))
+
+        # Education - UPDATED for dynamic entries
+        if resume_data.get('education') and isinstance(resume_data['education'], list):
             story.append(Paragraph('EDUCATION', heading_style))
-            story.append(Paragraph(resume_data['education'], normal_style))
-            story.append(Spacer(1, 12))
-        
+            for edu in resume_data['education']:
+                if isinstance(edu, dict) and (edu.get('degree') or edu.get('school')):
+                    # Degree and School
+                    if edu.get('degree') and edu.get('school'):
+                        story.append(Paragraph(f"<b>{edu['degree']}</b> - {edu['school']}", normal_style))
+                    elif edu.get('degree'):
+                        story.append(Paragraph(f"<b>{edu['degree']}</b>", normal_style))
+                    elif edu.get('school'):
+                        story.append(Paragraph(f"<b>{edu['school']}</b>", normal_style))
+                    
+                    # Date, Location, GPA
+                    details = []
+                    if edu.get('graduationDate'):
+                        try:
+                            grad_date = datetime.strptime(edu['graduationDate'] + '-01', '%Y-%m-%d')
+                            details.append(grad_date.strftime('%b %Y'))
+                        except:
+                            details.append(edu['graduationDate'])
+                    
+                    if edu.get('location'):
+                        details.append(edu['location'])
+                    
+                    if edu.get('gpa') and float(edu['gpa']) >= 3.5:
+                        details.append(f"GPA: {edu['gpa']}")
+                    
+                    if details:
+                        story.append(Paragraph(' | '.join(details), normal_style))
+                    
+                    # Description
+                    if edu.get('description'):
+                        story.append(Paragraph(edu['description'], normal_style))
+                    
+                    story.append(Spacer(1, 8))
+            story.append(Spacer(1, 4))
+
         # Skills
         if resume_data.get('skills'):
             story.append(Paragraph('SKILLS', heading_style))
             story.append(Paragraph(resume_data['skills'], normal_style))
-        
+
         # Build PDF
         doc.build(story)
         buffer.seek(0)
-        
+
         return send_file(
             buffer,
             as_attachment=True,
             download_name=f"{name.replace(' ', '_')}_Resume_{template.title()}.pdf",
             mimetype='application/pdf'
         )
-        
+
     except Exception as e:
+        print(f"PDF Export Error: {str(e)}")  # Debug log
         return jsonify({'error': f'Error generating PDF: {str(e)}'}), 500
+
 
 @app.route('/health')
 def health_check():

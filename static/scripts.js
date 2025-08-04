@@ -58,6 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Initialize dynamic sections
+    initializeExperienceSection();
+    initializeEducationSection();
+    
     // Initialize clear button
     const clearBtn = document.getElementById('clear-btn');
     if (clearBtn) {
@@ -335,6 +339,7 @@ function getElementValue(elementId) {
 
 // COMPLETE template HTML generation function
 // Updated generateTemplateHTML function - replace the experience section part
+// Updated generateTemplateHTML function
 function generateTemplateHTML(data, template) {
     try {
         console.log('Generating HTML for template:', template);
@@ -413,16 +418,46 @@ function generateTemplateHTML(data, template) {
             html += `</div>`;
         }
         
-        // Education Section
-        if (data.education) {
-            html += `
-                <div class="resume-section ${template}-section">
-                    <h3>Education</h3>
-                    <div class="education-entry">
-                        <p>${escapeHtml(data.education).replace(/\n/g, '<br>')}</p>
-                    </div>
-                </div>
-            `;
+        // Education Section - UPDATED for dynamic entries
+        if (data.education && Array.isArray(data.education) && data.education.length > 0) {
+            html += `<div class="resume-section ${template}-section">
+                <h3>Education</h3>`;
+            
+            data.education.forEach(edu => {
+                if (edu.degree || edu.school) {
+                    html += `<div class="education-entry">`;
+                    
+                    // Degree and School
+                    if (edu.degree || edu.school) {
+                        html += `<div class="edu-header">
+                            <h4>${escapeHtml(edu.degree || 'Degree')}</h4>
+                            <span class="school">${escapeHtml(edu.school || 'School')}</span>
+                        </div>`;
+                    }
+                    
+                    // Date, Location, GPA
+                    let details = [];
+                    if (edu.graduationDate) {
+                        const gradDate = new Date(edu.graduationDate + '-01');
+                        details.push(gradDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+                    }
+                    if (edu.location) details.push(edu.location);
+                    if (edu.gpa && parseFloat(edu.gpa) >= 3.5) details.push(`GPA: ${edu.gpa}`);
+                    
+                    if (details.length > 0) {
+                        html += `<div class="edu-dates">${details.join(' | ')}</div>`;
+                    }
+                    
+                    // Description
+                    if (edu.description) {
+                        html += `<div class="edu-description">${escapeHtml(edu.description).replace(/\n/g, '<br>')}</div>`;
+                    }
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            html += `</div>`;
         }
         
         // Skills Section
@@ -1260,6 +1295,96 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Make functions globally available
+window.addEducationEntry = addEducationEntry;
+window.removeEducationEntry = removeEducationEntry;
+window.getEducationAISuggestion = getEducationAISuggestion;
+
+
+
+// Get education data for preview and saving
+function getEducationData() {
+    return educationEntries.map(entry => ({
+        degree: entry.degree || '',
+        school: entry.school || '',
+        location: entry.location || '',
+        graduationDate: entry.graduationDate || '',
+        gpa: entry.gpa || '',
+        description: entry.description || ''
+    }));
+}
+
+// Get experience data for preview and saving
+function getExperienceData() {
+    return experienceEntries.map(entry => ({
+        company: entry.company || '',
+        position: entry.position || '',
+        location: entry.location || '',
+        startDate: entry.startDate || '',
+        endDate: entry.endDate || '',
+        current: entry.current || false,
+        description: entry.description || ''
+    }));
+}
+
+// Load education entries from saved data
+function loadEducationEntries(savedEducation) {
+    // Clear existing entries
+    educationEntries = [];
+    educationCounter = 0;
+    const container = document.getElementById('education-container');
+    if (container) container.innerHTML = '';
+    
+    if (Array.isArray(savedEducation) && savedEducation.length > 0) {
+        // Load from new format (array of objects)
+        savedEducation.forEach(edu => addEducationEntry(edu));
+    } else if (typeof savedEducation === 'string' && savedEducation.trim()) {
+        // Convert from old format (single text)
+        addEducationEntry({
+            degree: '',
+            school: '',
+            location: '',
+            graduationDate: '',
+            gpa: '',
+            description: savedEducation
+        });
+    } else {
+        // Add default empty entry
+        addEducationEntry();
+    }
+}
+
+// Load experience entries from saved data
+function loadExperienceEntries(savedExperience) {
+    // Clear existing entries
+    experienceEntries = [];
+    experienceCounter = 0;
+    const container = document.getElementById('experience-container');
+    if (container) container.innerHTML = '';
+    
+    if (Array.isArray(savedExperience) && savedExperience.length > 0) {
+        // Load from new format (array of objects)
+        savedExperience.forEach(exp => addExperienceEntry(exp));
+    } else if (typeof savedExperience === 'string' && savedExperience.trim()) {
+        // Convert from old format (single text)
+        addExperienceEntry({
+            company: '',
+            position: '',
+            location: '',
+            startDate: '',
+            endDate: '',
+            current: false,
+            description: savedExperience
+        });
+    } else {
+        // Add default empty entry
+        addExperienceEntry();
+    }
+}
+
+// Make functions globally available
+window.addExperienceEntry = addExperienceEntry;
+window.removeExperienceEntry = removeExperienceEntry;
+window.getExperienceAISuggestion = getExperienceAISuggestion;
 window.addEducationEntry = addEducationEntry;
 window.removeEducationEntry = removeEducationEntry;
 window.getEducationAISuggestion = getEducationAISuggestion;

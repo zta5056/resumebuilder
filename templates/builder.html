@@ -57,13 +57,16 @@
                     </div>
                 </div>
 
-                <!-- Work Experience -->
+                <!-- Work Experience - UPDATED -->
                 <div class="form-section">
                     <h3>💼 Work Experience</h3>
-                    <div class="form-group ai-enhanced">
-                        <label for="experience-input">Work Experience</label>
-                        <textarea id="experience-input" rows="6" placeholder="Describe your work experience, including job titles, companies, dates, and key achievements...">{{ resume_data.experience if resume_data.experience else '' }}</textarea>
-                        <button type="button" class="btn-ai" onclick="getAISuggestion('experience')">🤖 AI Suggest</button>
+                    <div id="experience-container">
+                        <!-- Experience entries will be dynamically added here -->
+                    </div>
+                    <div class="experience-actions">
+                        <button type="button" id="add-experience-btn" class="btn btn-outline">
+                            ➕ Add Experience
+                        </button>
                     </div>
                 </div>
 

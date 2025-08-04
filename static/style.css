@@ -1334,3 +1334,127 @@ html {
     background: #d97706;
     border-color: #d97706;
 }
+/* Dynamic Experience Entries */
+.experience-entry {
+    background: var(--surface-alt);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.experience-entry:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-md);
+}
+
+.experience-entry.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgb(30 64 175 / 0.1);
+}
+
+.experience-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.experience-number {
+    background: var(--primary);
+    color: var(--text-white);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.experience-title {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.remove-experience-btn {
+    background: var(--error);
+    color: var(--text-white);
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.remove-experience-btn:hover {
+    background: #b91c1c;
+    transform: scale(1.1);
+}
+
+.experience-actions {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.date-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.current-position {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.current-position input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+/* Enhanced form styling for experience */
+.experience-entry .form-group input,
+.experience-entry .form-group textarea {
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.experience-entry .form-group input:focus,
+.experience-entry .form-group textarea:focus {
+    border-color: var(--primary);
+}
+
+/* Responsive design for experience entries */
+@media (max-width: 768px) {
+    .experience-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .date-range {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .current-position {
+        grid-column: 1;
+    }
+}
+

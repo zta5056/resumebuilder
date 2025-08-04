@@ -47,7 +47,7 @@ def builder():
             if not resume_data:
                 return jsonify({'status': 'error', 'message': 'No resume data provided'}), 400
             
-            # Store in session with validation
+            # Store in session with validation - UPDATED to handle array experience
             session['resume_data'] = {
                 'personal_info': {
                     'name': resume_data.get('name', ''),
@@ -57,7 +57,7 @@ def builder():
                     'location': resume_data.get('location', '')
                 },
                 'summary': resume_data.get('summary', ''),
-                'experience': resume_data.get('experience', ''),
+                'experience': resume_data.get('experience', []),  # Now stores array
                 'education': resume_data.get('education', ''),
                 'skills': resume_data.get('skills', ''),
                 'template': resume_data.get('template', 'classic'),
@@ -77,7 +77,7 @@ def builder():
         saved_data = {
             'personal_info': {'name': '', 'title': '', 'email': '', 'phone': '', 'location': ''},
             'summary': '',
-            'experience': '',
+            'experience': [],  # Initialize as empty array
             'education': '',
             'skills': '',
             'template': selected_template
@@ -91,6 +91,7 @@ def builder():
     return render_template('builder.html', 
                          selected_template=selected_template, 
                          resume_data=saved_data)
+
 
 @app.route('/clear_session', methods=['POST'])
 def clear_session():

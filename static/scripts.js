@@ -6,7 +6,9 @@ let currentTemplate = 'classic';
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing live preview...');
-    
+    initializeEducationSection();
+    initializeExperienceSection();
+    initializeProjectsSection();
     // Initialize template selector
     const templateSelect = document.getElementById('template-select');
     if (templateSelect) {
@@ -119,6 +121,11 @@ async function loadSavedData() {
             
             if (savedData.education) {
                 loadEducationEntries(savedData.education);
+            }
+            
+            // NEW: Load projects
+            if (savedData.projects) {
+                loadProjectEntries(savedData.projects);
             }
             
             if (savedData.skills && document.getElementById('skills-input')) {
@@ -313,6 +320,7 @@ function updatePreview() {
             summary: getElementValue('summary-input') || '',
             experience: getExperienceData(), // Dynamic array
             education: getEducationData(), // Dynamic array
+            projects: getProjectsData(), // NEW: Dynamic projects array
             skills: getElementValue('skills-input') || '',
             template: currentTemplate
         };
@@ -459,6 +467,70 @@ function generateTemplateHTML(data, template) {
             
             html += `</div>`;
         }
+        // Add this after the Education section in generateTemplateHTML function
+        
+        // Projects Section - NEW
+        if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
+            html += `<div class="resume-section ${template}-section">
+                <h3>Projects</h3>`;
+            
+            data.projects.forEach(project => {
+                if (project.name) {
+                    html += `<div class="project-entry">`;
+                    
+                    // Project Name
+                    html += `<div class="project-header">
+                        <h4>${escapeHtml(project.name)}</h4>
+                    </div>`;
+                    
+                    // Technologies
+                    if (project.technologies) {
+                        const techArray = project.technologies.split(',').map(t => t.trim()).filter(t => t);
+                        if (techArray.length > 0) {
+                            html += `<div class="project-tech">
+                                <strong>Technologies:</strong> ${techArray.map(tech => `<span class="tech-tag">${escapeHtml(tech)}</span>`).join(' ')}
+                            </div>`;
+                        }
+                    }
+                    
+                    // Dates
+                    if (project.startDate || project.endDate || project.current) {
+                        let dateRange = '';
+                        if (project.startDate) {
+                            const startDate = new Date(project.startDate + '-01');
+                            dateRange += startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                        }
+                        if (project.current) {
+                            dateRange += ' - Present';
+                        } else if (project.endDate) {
+                            const endDate = new Date(project.endDate + '-01');
+                            dateRange += ' - ' + endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                        }
+                        if (dateRange) {
+                            html += `<div class="project-dates">${dateRange}</div>`;
+                        }
+                    }
+                    
+                    // Description
+                    if (project.description) {
+                        html += `<div class="project-description">${escapeHtml(project.description).replace(/\n/g, '<br>')}</div>`;
+                    }
+                    
+                    // Links
+                    let links = [];
+                    if (project.githubUrl) links.push(`<a href="${escapeHtml(project.githubUrl)}" target="_blank">GitHub</a>`);
+                    if (project.demoUrl) links.push(`<a href="${escapeHtml(project.demoUrl)}" target="_blank">Live Demo</a>`);
+                    if (links.length > 0) {
+                        html += `<div class="project-links">${links.join(' | ')}</div>`;
+                    }
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            html += `</div>`;
+        }
+
         
         // Skills Section
         if (data.skills) {
@@ -962,15 +1034,6 @@ function getExperienceData() {
     }));
 }
 
-// Update your existing DOMContentLoaded event listener
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing code ...
-    
-    // Initialize experience section
-    initializeExperienceSection();
-    
-    // ... rest of existing code ...
-});
 
 // Make functions globally available
 window.addExperienceEntry = addExperienceEntry;
@@ -1284,15 +1347,355 @@ function loadEducationEntries(savedEducation) {
     }
 }
 
-// Add to your DOMContentLoaded event listener:
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing code ...
+// Projects management
+let projectEntries = [];
+let projectCounter = 0;
+
+// Initialize projects section
+function initializeProjectsSection() {
+    const container = document.getElementById('projects-container');
+    const addBtn = document.getElementById('add-project-btn');
     
-    // Initialize education section
-    initializeEducationSection();
+    if (!container || !addBtn) return;
     
-    // ... rest of existing code ...
-});
+    addBtn.addEventListener('click', addProjectEntry);
+    
+    // Add first entry by default
+    if (projectEntries.length === 0) {
+        addProjectEntry();
+    }
+}
+
+// Add new project entry
+function addProjectEntry(data = null) {
+    projectCounter++;
+    const entryId = `project-${projectCounter}`;
+    
+    const entryData = data || {
+        name: '',
+        description: '',
+        technologies: '',
+        startDate: '',
+        endDate: '',
+        current: false,
+        githubUrl: '',
+        demoUrl: ''
+    };
+    
+    projectEntries.push({ id: entryId, ...entryData });
+    
+    const container = document.getElementById('projects-container');
+    const entryHTML = generateProjectEntryHTML(entryId, entryData, projectEntries.length);
+    
+    container.insertAdjacentHTML('beforeend', entryHTML);
+    
+    // Add event listeners for the new entry
+    addProjectEventListeners(entryId);
+    
+    // Update preview
+    updatePreview();
+    
+    // Focus on project name field of new entry
+    const nameInput = document.getElementById(`${entryId}-name`);
+    if (nameInput) nameInput.focus();
+}
+
+// Generate HTML for project entry
+function generateProjectEntryHTML(entryId, data, index) {
+    // Ensure all data properties exist with default empty strings
+    const safeData = {
+        name: data.name || '',
+        description: data.description || '',
+        technologies: data.technologies || '',
+        startDate: data.startDate || '',
+        endDate: data.endDate || '',
+        current: data.current || false,
+        githubUrl: data.githubUrl || '',
+        demoUrl: data.demoUrl || ''
+    };
+    
+    return `
+        <div class="project-entry" id="${entryId}">
+            <div class="project-header">
+                <div class="project-number">${index}</div>
+                <h4 class="project-title">
+                    ${safeData.name || 'New Project'}
+                </h4>
+                <button type="button" class="remove-project-btn" onclick="removeProjectEntry('${entryId}')">
+                    ✕
+                </button>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="${entryId}-name">Project Name *</label>
+                    <input type="text" id="${entryId}-name" value="${safeData.name}" required placeholder="e.g., E-commerce Web App">
+                </div>
+                <div class="form-group">
+                    <label for="${entryId}-technologies">Technologies Used</label>
+                    <input type="text" id="${entryId}-technologies" value="${safeData.technologies}" placeholder="React, Node.js, MongoDB, AWS" class="tech-stack-input">
+                    <div class="tech-preview" id="${entryId}-tech-preview"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Project Timeline</label>
+                <div class="date-range">
+                    <div class="form-group">
+                        <label for="${entryId}-start-date">Start Date</label>
+                        <input type="month" id="${entryId}-start-date" value="${safeData.startDate}">
+                    </div>
+                    <div class="form-group">
+                        <label for="${entryId}-end-date">End Date</label>
+                        <input type="month" id="${entryId}-end-date" value="${safeData.endDate}" ${safeData.current ? 'disabled' : ''}>
+                    </div>
+                    <div class="current-position">
+                        <input type="checkbox" id="${entryId}-current" ${safeData.current ? 'checked' : ''}>
+                        <label for="${entryId}-current">Ongoing Project</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Project Links (Optional)</label>
+                <div class="project-links">
+                    <div class="form-group">
+                        <label for="${entryId}-github">GitHub URL</label>
+                        <input type="url" id="${entryId}-github" value="${safeData.githubUrl}" placeholder="https://github.com/username/project">
+                    </div>
+                    <div class="form-group">
+                        <label for="${entryId}-demo">Live Demo URL</label>
+                        <input type="url" id="${entryId}-demo" value="${safeData.demoUrl}" placeholder="https://project-demo.com">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group ai-enhanced">
+                <label for="${entryId}-description">Project Description & Key Achievements</label>
+                <textarea id="${entryId}-description" rows="4" placeholder="• Developed a full-stack e-commerce application serving 1000+ users&#10;• Implemented secure payment processing reducing checkout time by 40%&#10;• Built responsive UI with React and integrated REST APIs">${safeData.description}</textarea>
+                <button type="button" class="btn-ai" onclick="getProjectAISuggestion('${entryId}')">🤖 AI Suggest</button>
+            </div>
+        </div>
+    `;
+}
+
+// Add event listeners for project entry
+function addProjectEventListeners(entryId) {
+    const inputs = document.querySelectorAll(`#${entryId} input, #${entryId} textarea`);
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updateProjectEntry(entryId);
+            updateProjectTitle(entryId);
+            
+            // Special handling for technologies field
+            if (this.id.includes('technologies')) {
+                updateTechPreview(entryId);
+            }
+            
+            updatePreview();
+            autoSave();
+        });
+        
+        input.addEventListener('focus', function() {
+            document.getElementById(entryId).classList.add('active');
+        });
+        
+        input.addEventListener('blur', function() {
+            document.getElementById(entryId).classList.remove('active');
+        });
+    });
+    
+    // Special handling for ongoing project checkbox
+    const currentCheckbox = document.getElementById(`${entryId}-current`);
+    const endDateInput = document.getElementById(`${entryId}-end-date`);
+    
+    if (currentCheckbox && endDateInput) {
+        currentCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                endDateInput.disabled = true;
+                endDateInput.value = '';
+            } else {
+                endDateInput.disabled = false;
+            }
+            updateProjectEntry(entryId);
+        });
+    }
+    
+    // Initialize tech preview
+    updateTechPreview(entryId);
+}
+
+// Update tech stack preview
+function updateTechPreview(entryId) {
+    const techInput = document.getElementById(`${entryId}-technologies`);
+    const preview = document.getElementById(`${entryId}-tech-preview`);
+    
+    if (!techInput || !preview) return;
+    
+    const technologies = techInput.value.split(',').map(t => t.trim()).filter(t => t);
+    
+    preview.innerHTML = technologies.map(tech => 
+        `<span class="tech-tag">${escapeHtml(tech)}</span>`
+    ).join('');
+}
+
+// Update project entry data
+function updateProjectEntry(entryId) {
+    const entry = projectEntries.find(e => e.id === entryId);
+    if (!entry) return;
+    
+    entry.name = document.getElementById(`${entryId}-name`)?.value || '';
+    entry.description = document.getElementById(`${entryId}-description`)?.value || '';
+    entry.technologies = document.getElementById(`${entryId}-technologies`)?.value || '';
+    entry.startDate = document.getElementById(`${entryId}-start-date`)?.value || '';
+    entry.endDate = document.getElementById(`${entryId}-end-date`)?.value || '';
+    entry.current = document.getElementById(`${entryId}-current`)?.checked || false;
+    entry.githubUrl = document.getElementById(`${entryId}-github`)?.value || '';
+    entry.demoUrl = document.getElementById(`${entryId}-demo`)?.value || '';
+}
+
+// Update project entry title
+function updateProjectTitle(entryId) {
+    const entry = projectEntries.find(e => e.id === entryId);
+    const titleElement = document.querySelector(`#${entryId} .project-title`);
+    
+    if (entry && titleElement) {
+        const title = entry.name || 'New Project';
+        titleElement.textContent = title;
+    }
+}
+
+// Remove project entry
+function removeProjectEntry(entryId) {
+    if (projectEntries.length <= 1) {
+        showMessage('You must have at least one project entry.', 'warning');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to remove this project entry?')) {
+        // Remove from array
+        projectEntries = projectEntries.filter(e => e.id !== entryId);
+        
+        // Remove from DOM
+        const entryElement = document.getElementById(entryId);
+        if (entryElement) {
+            entryElement.remove();
+        }
+        
+        // Update numbering
+        updateProjectNumbering();
+        
+        // Update preview
+        updatePreview();
+        autoSave();
+        
+        showMessage('Project entry removed successfully!', 'success');
+    }
+}
+
+// Update project entry numbering
+function updateProjectNumbering() {
+    const container = document.getElementById('projects-container');
+    const entries = container.querySelectorAll('.project-entry');
+    
+    entries.forEach((entry, index) => {
+        const numberElement = entry.querySelector('.project-number');
+        if (numberElement) {
+            numberElement.textContent = index + 1;
+        }
+    });
+}
+
+// AI suggestion for specific project entry
+async function getProjectAISuggestion(entryId) {
+    const entry = projectEntries.find(e => e.id === entryId);
+    if (!entry) return;
+    
+    const textarea = document.getElementById(`${entryId}-description`);
+    const content = textarea.value.trim();
+    
+    if (!content) {
+        showMessage('Please enter some project details before requesting AI suggestions.', 'warning');
+        return;
+    }
+    
+    // Create context for AI
+    const context = `Project: ${entry.name || 'Project'}\nTechnologies: ${entry.technologies || 'Various Technologies'}\nDescription: ${content}`;
+    
+    try {
+        isProcessing = true;
+        textarea.disabled = true;
+        
+        showMessage('Getting AI suggestions for your project...', 'info');
+        
+        const response = await fetch('/ai_suggest', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ 
+                section: 'projects', 
+                content: context,
+                job_title: document.getElementById('title')?.value || ''
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || `Server error: ${response.status}`);
+        }
+        
+        if (data.suggestion) {
+            textarea.value = data.suggestion;
+            updateProjectEntry(entryId);
+            updatePreview();
+            showMessage('AI suggestions applied successfully!', 'success');
+        }
+        
+    } catch (error) {
+        console.error('AI suggestion error:', error);
+        showMessage(`Error: ${error.message}`, 'error');
+    } finally {
+        isProcessing = false;
+        textarea.disabled = false;
+    }
+}
+
+// Get projects data for preview and saving
+function getProjectsData() {
+    return projectEntries.map(entry => ({
+        name: entry.name || '',
+        description: entry.description || '',
+        technologies: entry.technologies || '',
+        startDate: entry.startDate || '',
+        endDate: entry.endDate || '',
+        current: entry.current || false,
+        githubUrl: entry.githubUrl || '',
+        demoUrl: entry.demoUrl || ''
+    }));
+}
+
+// Load project entries from saved data
+function loadProjectEntries(savedProjects) {
+    // Clear existing entries
+    projectEntries = [];
+    projectCounter = 0;
+    const container = document.getElementById('projects-container');
+    if (container) container.innerHTML = '';
+    
+    if (Array.isArray(savedProjects) && savedProjects.length > 0) {
+        // Load from array format
+        savedProjects.forEach(project => addProjectEntry(project));
+    } else {
+        // Add default empty entry
+        addProjectEntry();
+    }
+}
+
+
 
 // Make functions globally available
 window.addEducationEntry = addEducationEntry;
@@ -1388,4 +1791,8 @@ window.getExperienceAISuggestion = getExperienceAISuggestion;
 window.addEducationEntry = addEducationEntry;
 window.removeEducationEntry = removeEducationEntry;
 window.getEducationAISuggestion = getEducationAISuggestion;
+// Make functions globally available
+window.addProjectEntry = addProjectEntry;
+window.removeProjectEntry = removeProjectEntry;
+window.getProjectAISuggestion = getProjectAISuggestion;
 

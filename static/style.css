@@ -1545,4 +1545,131 @@ html {
     margin-top: 0.25rem;
 }
 
+/* Dynamic Project Entries */
+.project-entry {
+    background: var(--surface-alt);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.project-entry:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-md);
+}
+
+.project-entry.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgb(30 64 175 / 0.1);
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.project-number {
+    background: var(--success);
+    color: var(--text-white);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.project-title {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.remove-project-btn {
+    background: var(--error);
+    color: var(--text-white);
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.remove-project-btn:hover {
+    background: #b91c1c;
+    transform: scale(1.1);
+}
+
+.projects-actions {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.project-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.tech-stack-input {
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.tech-preview {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.tech-tag {
+    background: var(--success);
+    color: var(--text-white);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Enhanced form styling for projects */
+.project-entry .form-group input,
+.project-entry .form-group textarea {
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.project-entry .form-group input:focus,
+.project-entry .form-group textarea:focus {
+    border-color: var(--primary);
+}
+
+/* Responsive design for project entries */
+@media (max-width: 768px) {
+    .project-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .project-links {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
+
 

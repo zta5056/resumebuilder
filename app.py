@@ -47,7 +47,7 @@ def builder():
             if not resume_data:
                 return jsonify({'status': 'error', 'message': 'No resume data provided'}), 400
             
-            # Store in session with validation - UPDATED for dynamic sections
+            # Store in session with validation - UPDATED for projects
             session['resume_data'] = {
                 'personal_info': {
                     'name': resume_data.get('name', ''),
@@ -59,6 +59,7 @@ def builder():
                 'summary': resume_data.get('summary', ''),
                 'experience': resume_data.get('experience', []),  # Array for dynamic entries
                 'education': resume_data.get('education', []),    # Array for dynamic entries
+                'projects': resume_data.get('projects', []),     # NEW: Array for projects
                 'skills': resume_data.get('skills', ''),
                 'template': resume_data.get('template', 'classic'),
                 'timestamp': datetime.now().isoformat()
@@ -79,6 +80,7 @@ def builder():
             'summary': '',
             'experience': [],  # Initialize as empty arrays
             'education': [],
+            'projects': [],   # NEW: Initialize projects
             'skills': '',
             'template': selected_template
         }
@@ -362,6 +364,15 @@ def ai_suggest():
             - Include both technical and soft skills
             - ATS-optimized keywords
             
+            Original: {content}""",
+            'projects': f"""Rewrite this project description for a resume. Make it:
+            - Focus on technical achievements and impact
+            - Include specific metrics and results where possible
+            - Highlight technologies and methodologies used
+            - Use strong action verbs (Built, Developed, Implemented, etc.)
+            - Show problem-solving and technical skills
+            - ATS-friendly with relevant keywords for {job_title if job_title else 'technical roles'}
+            
             Original: {content}"""
         }
         
@@ -572,6 +583,59 @@ def export_pdf():
                     # Description
                     if edu.get('description'):
                         story.append(Paragraph(edu['description'], normal_style))
+                    
+                    story.append(Spacer(1, 8))
+            story.append(Spacer(1, 4))
+
+        # Projects - NEW SECTION
+        if resume_data.get('projects') and isinstance(resume_data['projects'], list):
+            story.append(Paragraph('PROJECTS', heading_style))
+            for project in resume_data['projects']:
+                if isinstance(project, dict) and project.get('name'):
+                    # Project Name
+                    story.append(Paragraph(f"<b>{project['name']}</b>", normal_style))
+                    
+                    # Technologies and dates
+                    details = []
+                    if project.get('technologies'):
+                        details.append(f"Technologies: {project['technologies']}")
+                    
+                    if project.get('startDate') or project.get('endDate') or project.get('current'):
+                        date_range = ''
+                        if project.get('startDate'):
+                            try:
+                                start_date = datetime.strptime(project['startDate'] + '-01', '%Y-%m-%d')
+                                date_range += start_date.strftime('%b %Y')
+                            except:
+                                date_range += project['startDate']
+                        
+                        if project.get('current'):
+                            date_range += ' - Present'
+                        elif project.get('endDate'):
+                            try:
+                                end_date = datetime.strptime(project['endDate'] + '-01', '%Y-%m-%d')
+                                date_range += ' - ' + end_date.strftime('%b %Y')
+                            except:
+                                date_range += ' - ' + project['endDate']
+                        
+                        if date_range:
+                            details.append(date_range)
+                    
+                    if details:
+                        story.append(Paragraph(' | '.join(details), normal_style))
+                    
+                    # Description
+                    if project.get('description'):
+                        story.append(Paragraph(project['description'], normal_style))
+                    
+                    # Links
+                    links = []
+                    if project.get('githubUrl'):
+                        links.append(f"GitHub: {project['githubUrl']}")
+                    if project.get('demoUrl'):
+                        links.append(f"Demo: {project['demoUrl']}")
+                    if links:
+                        story.append(Paragraph(' | '.join(links), normal_style))
                     
                     story.append(Spacer(1, 8))
             story.append(Spacer(1, 4))

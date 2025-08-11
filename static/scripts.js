@@ -1022,8 +1022,42 @@ function updatePreview() {
     }
 }
 
+// Add this function BEFORE generateTemplateHTML
+function shouldRenderSection(sectionData, sectionType) {
+    if (sectionType === 'projects') {
+        return sectionData && sectionData.length > 0 && sectionData.some(p => p.name && p.name.trim());
+    }
+    if (sectionType === 'education') {
+        return sectionData && sectionData.length > 0 && sectionData.some(e => e.degree && e.degree.trim());
+    }
+    if (sectionType === 'experience') {
+        return sectionData && sectionData.length > 0 && sectionData.some(e => e.company && e.company.trim());
+    }
+    // For string-based sections like summary and skills
+    return sectionData && sectionData.trim().length > 0;
+}
+
+// Add this helper function BEFORE generateTemplateHTML
+function shouldRenderSection(sectionData, sectionType) {
+    if (sectionType === 'projects') {
+        return sectionData && sectionData.length > 0 && sectionData.some(p => p.name && p.name.trim());
+    }
+    if (sectionType === 'education') {
+        return sectionData && sectionData.length > 0 && sectionData.some(e => e.degree && e.degree.trim());
+    }
+    if (sectionType === 'experience') {
+        return sectionData && sectionData.length > 0 && sectionData.some(e => e.company && e.company.trim());
+    }
+    // For string-based sections like summary and skills
+    return sectionData && sectionData.trim().length > 0;
+}
+
+// COMPLETE generateTemplateHTML function with optimal section order
 function generateTemplateHTML(data, template) {
     try {
+        console.log('Generating HTML for template:', template);
+        
+        // Base header HTML with enhanced contact info
         let html = `
             <div class="resume-header ${template}-header">
                 <h1>${escapeHtml(data.name)}</h1>
@@ -1039,7 +1073,8 @@ function generateTemplateHTML(data, template) {
             </div>
         `;
         
-        if (data.summary) {
+        // 1. Professional Summary
+        if (shouldRenderSection(data.summary, 'summary')) {
             html += `
                 <div class="resume-section ${template}-section">
                     <h3>Professional Summary</h3>
@@ -1048,13 +1083,58 @@ function generateTemplateHTML(data, template) {
             `;
         }
         
-        if (data.experience && Array.isArray(data.experience) && data.experience.length > 0) {
-            html += `<div class="resume-section ${template}-section"><h3>Work Experience</h3>`;
+        // 2. Education Section - MOVED UP for students/new grads
+        if (shouldRenderSection(data.education, 'education')) {
+            html += `<div class="resume-section ${template}-section">
+                <h3>Education</h3>`;
+            
+            data.education.forEach(edu => {
+                if (edu.degree || edu.school) {
+                    html += `<div class="education-entry">`;
+                    
+                    // Degree and School
+                    if (edu.degree || edu.school) {
+                        html += `<div class="edu-header">
+                            <h4>${escapeHtml(edu.degree || 'Degree')}</h4>
+                            <span class="school">${escapeHtml(edu.school || 'School')}</span>
+                        </div>`;
+                    }
+                    
+                    // Date, Location, GPA
+                    let details = [];
+                    if (edu.graduationDate) {
+                        const gradDate = new Date(edu.graduationDate + '-01');
+                        details.push(gradDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+                    }
+                    if (edu.location) details.push(edu.location);
+                    if (edu.gpa && parseFloat(edu.gpa) >= 3.5) details.push(`GPA: ${edu.gpa}`);
+                    
+                    if (details.length > 0) {
+                        html += `<div class="edu-dates">${details.join(' | ')}</div>`;
+                    }
+                    
+                    // Description
+                    if (edu.description) {
+                        html += `<div class="edu-description">${escapeHtml(edu.description).replace(/\n/g, '<br>')}</div>`;
+                    }
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            html += `</div>`;
+        }
+        
+        // 3. Work Experience Section - Now after Education
+        if (shouldRenderSection(data.experience, 'experience')) {
+            html += `<div class="resume-section ${template}-section">
+                <h3>Work Experience</h3>`;
             
             data.experience.forEach(exp => {
                 if (exp.company || exp.position) {
                     html += `<div class="experience-entry">`;
                     
+                    // Position and Company
                     if (exp.position || exp.company) {
                         html += `<div class="exp-header">
                             <h4>${escapeHtml(exp.position || 'Position')}</h4>
@@ -1062,6 +1142,7 @@ function generateTemplateHTML(data, template) {
                         </div>`;
                     }
                     
+                    // Dates and Location
                     let dateLocation = [];
                     if (exp.startDate || exp.endDate || exp.current) {
                         let dateRange = '';
@@ -1083,6 +1164,7 @@ function generateTemplateHTML(data, template) {
                         html += `<div class="exp-dates">${dateLocation.join(' | ')}</div>`;
                     }
                     
+                    // Description
                     if (exp.description) {
                         html += `<div class="exp-description">${escapeHtml(exp.description).replace(/\n/g, '<br>')}</div>`;
                     }
@@ -1094,14 +1176,21 @@ function generateTemplateHTML(data, template) {
             html += `</div>`;
         }
         
-        if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
-            html += `<div class="resume-section ${template}-section"><h3>Projects</h3>`;
+        // 4. Projects Section - Only renders if has meaningful content
+        if (shouldRenderSection(data.projects, 'projects')) {
+            html += `<div class="resume-section ${template}-section">
+                <h3>Projects</h3>`;
             
             data.projects.forEach(project => {
                 if (project.name) {
-                    html += `<div class="project-entry">
-                        <div class="project-header"><h4>${escapeHtml(project.name)}</h4></div>`;
+                    html += `<div class="project-entry">`;
                     
+                    // Project Name
+                    html += `<div class="project-header">
+                        <h4>${escapeHtml(project.name)}</h4>
+                    </div>`;
+                    
+                    // Technologies
                     if (project.technologies) {
                         const techArray = project.technologies.split(',').map(t => t.trim()).filter(t => t);
                         if (techArray.length > 0) {
@@ -1111,6 +1200,7 @@ function generateTemplateHTML(data, template) {
                         }
                     }
                     
+                    // Dates
                     if (project.startDate || project.endDate || project.current) {
                         let dateRange = '';
                         if (project.startDate) {
@@ -1128,10 +1218,12 @@ function generateTemplateHTML(data, template) {
                         }
                     }
                     
+                    // Description
                     if (project.description) {
                         html += `<div class="project-description">${escapeHtml(project.description).replace(/\n/g, '<br>')}</div>`;
                     }
                     
+                    // Links
                     let links = [];
                     if (project.githubUrl) links.push(`<a href="${escapeHtml(project.githubUrl)}" target="_blank">GitHub</a>`);
                     if (project.demoUrl) links.push(`<a href="${escapeHtml(project.demoUrl)}" target="_blank">Live Demo</a>`);
@@ -1146,44 +1238,8 @@ function generateTemplateHTML(data, template) {
             html += `</div>`;
         }
         
-        if (data.education && Array.isArray(data.education) && data.education.length > 0) {
-            html += `<div class="resume-section ${template}-section"><h3>Education</h3>`;
-            
-            data.education.forEach(edu => {
-                if (edu.degree || edu.school) {
-                    html += `<div class="education-entry">`;
-                    
-                    if (edu.degree || edu.school) {
-                        html += `<div class="edu-header">
-                            <h4>${escapeHtml(edu.degree || 'Degree')}</h4>
-                            <span class="school">${escapeHtml(edu.school || 'School')}</span>
-                        </div>`;
-                    }
-                    
-                    let details = [];
-                    if (edu.graduationDate) {
-                        const gradDate = new Date(edu.graduationDate + '-01');
-                        details.push(gradDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
-                    }
-                    if (edu.location) details.push(edu.location);
-                    if (edu.gpa && parseFloat(edu.gpa) >= 3.5) details.push(`GPA: ${edu.gpa}`);
-                    
-                    if (details.length > 0) {
-                        html += `<div class="edu-dates">${details.join(' | ')}</div>`;
-                    }
-                    
-                    if (edu.description) {
-                        html += `<div class="edu-description">${escapeHtml(edu.description).replace(/\n/g, '<br>')}</div>`;
-                    }
-                    
-                    html += `</div>`;
-                }
-            });
-            
-            html += `</div>`;
-        }
-        
-        if (data.skills) {
+        // 5. Skills Section - Last as supporting evidence
+        if (shouldRenderSection(data.skills, 'skills')) {
             const skillsArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
             if (skillsArray.length > 0) {
                 html += `
@@ -1197,6 +1253,7 @@ function generateTemplateHTML(data, template) {
             }
         }
         
+        console.log('Generated HTML length:', html.length);
         return html;
         
     } catch (error) {
@@ -1204,6 +1261,7 @@ function generateTemplateHTML(data, template) {
         return '<p style="color: red; text-align: center; margin-top: 2rem;">Error generating preview. Please check the console for details.</p>';
     }
 }
+
 
 // ===== AI SUGGESTIONS =====
 async function getAISuggestion(section) {

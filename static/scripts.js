@@ -2515,3 +2515,12 @@ async function loadSavedData() {
     }
 }
 
+// Make functions globally available - ADD these to your existing global functions
+window.initializeAdvancedFeatures = initializeAdvancedFeatures;
+window.handleSuggestionAction = handleSuggestionAction;
+window.updateProgressIndicator = updateProgressIndicator;
+window.calculateATSScore = calculateATSScore;
+window.updatePreview = updatePreview;
+window.loadSavedData = loadSavedData;
+
+

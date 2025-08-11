@@ -42,24 +42,26 @@ def templates():
 def builder():
     if request.method == 'POST':
         try:
-            # Enhanced data validation
             resume_data = request.json
             if not resume_data:
                 return jsonify({'status': 'error', 'message': 'No resume data provided'}), 400
             
-            # Store in session with validation - UPDATED for projects
+            # Store enhanced personal info and all data
             session['resume_data'] = {
                 'personal_info': {
                     'name': resume_data.get('name', ''),
                     'title': resume_data.get('title', ''),
                     'email': resume_data.get('email', ''),
                     'phone': resume_data.get('phone', ''),
-                    'location': resume_data.get('location', '')
+                    'location': resume_data.get('location', ''),
+                    'linkedin': resume_data.get('linkedin', ''),
+                    'website': resume_data.get('website', ''),
+                    'github': resume_data.get('github', '')
                 },
                 'summary': resume_data.get('summary', ''),
-                'experience': resume_data.get('experience', []),  # Array for dynamic entries
-                'education': resume_data.get('education', []),    # Array for dynamic entries
-                'projects': resume_data.get('projects', []),     # NEW: Array for projects
+                'experience': resume_data.get('experience', []),
+                'education': resume_data.get('education', []),
+                'projects': resume_data.get('projects', []),
                 'skills': resume_data.get('skills', ''),
                 'template': resume_data.get('template', 'classic'),
                 'timestamp': datetime.now().isoformat()
@@ -74,13 +76,16 @@ def builder():
     # Get saved resume data - handle case where it might not exist
     saved_data = session.get('resume_data', {})
     if not saved_data:
-        # Initialize empty structure if no saved data
+        # Initialize empty structure with enhanced fields
         saved_data = {
-            'personal_info': {'name': '', 'title': '', 'email': '', 'phone': '', 'location': ''},
+            'personal_info': {
+                'name': '', 'title': '', 'email': '', 'phone': '', 'location': '',
+                'linkedin': '', 'website': '', 'github': ''
+            },
             'summary': '',
-            'experience': [],  # Initialize as empty arrays
+            'experience': [],
             'education': [],
-            'projects': [],   # NEW: Initialize projects
+            'projects': [],
             'skills': '',
             'template': selected_template
         }
@@ -93,7 +98,6 @@ def builder():
     return render_template('builder.html', 
                          selected_template=selected_template, 
                          resume_data=saved_data)
-
 
 @app.route('/clear_session', methods=['POST'])
 def clear_session():

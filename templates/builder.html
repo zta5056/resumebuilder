@@ -13,49 +13,54 @@
                 <option value="creative" {% if selected_template == 'creative' %}selected{% endif %}>Creative Professional</option>
             </select>
         </div>
-        <!-- Progress Indicator - ADD AFTER template-selector -->
-        <div class="progress-indicator">
-            <div class="progress-header">
-                <span class="progress-title">Resume Completion</span>
-                <span class="progress-percentage">0%</span>
+    </div>
+    
+    <!-- Progress Indicator - REQUIRED for JavaScript -->
+    <div class="progress-indicator">
+        <div class="progress-header">
+            <span class="progress-title">Resume Completion</span>
+            <span class="progress-percentage">0%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-sections">
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="personal">○</div>
+                <span>Personal</span>
             </div>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: 0%"></div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="summary">○</div>
+                <span>Summary</span>
             </div>
-            <div class="progress-sections">
-                <div class="progress-section">
-                    <div class="progress-icon incomplete" data-section="personal">○</div>
-                    <span>Personal</span>
-                </div>
-                <div class="progress-section">
-                    <div class="progress-icon incomplete" data-section="summary">○</div>
-                    <span>Summary</span>
-                </div>
-                <div class="progress-section">
-                    <div class="progress-icon incomplete" data-section="experience">○</div>
-                    <span>Experience</span>
-                </div>
-                <div class="progress-section">
-                    <div class="progress-icon incomplete" data-section="education">○</div>
-                    <span>Education</span>
-                </div>
-                <div class="progress-section">
-                    <div class="progress-icon incomplete" data-section="projects">○</div>
-                    <span>Projects</span>
-                </div>
-                <div class="progress-section">
-                    <div class="progress-icon incomplete" data-section="skills">○</div>
-                    <span>Skills</span>
-                </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="experience">○</div>
+                <span>Experience</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="education">○</div>
+                <span>Education</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="projects">○</div>
+                <span>Projects</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="skills">○</div>
+                <span>Skills</span>
             </div>
         </div>
-
     </div>
-   
+
+    <!-- Smart Suggestions Panel - REQUIRED for JavaScript -->
+    <div class="smart-suggestions">
+        <!-- Dynamic content will be inserted here by JavaScript -->
+    </div>
+    
     <div class="builder-layout">
         <div class="builder-form">
             <form id="resume-form">
-                <!-- Personal Information - ENHANCED -->
+                <!-- Personal Information - ENHANCED with all fields -->
                 <div class="form-section">
                     <h3>👤 Personal Information</h3>
                     <div class="form-row">
@@ -99,7 +104,7 @@
                         </div>
                     </div>
                     
-                    <!-- ATS Score Preview - NEW FEATURE -->
+                    <!-- ATS Score Preview - REQUIRED for JavaScript -->
                     <div class="ats-score-preview" id="ats-score-preview" style="display: none;">
                         <div class="score-header">
                             <h4>🎯 ATS Compatibility Score</h4>
@@ -126,7 +131,6 @@
                     </div>
                 </div>
 
-
                 <!-- Professional Summary -->
                 <div class="form-section">
                     <h3>📝 Professional Summary</h3>
@@ -137,11 +141,11 @@
                     </div>
                 </div>
 
-                <!-- Work Experience - Dynamic -->
+                <!-- Work Experience - Dynamic Section -->
                 <div class="form-section">
                     <h3>💼 Work Experience</h3>
                     <div id="experience-container">
-                        <!-- Experience entries will be dynamically added here -->
+                        <!-- Experience entries will be dynamically added here by JavaScript -->
                     </div>
                     <div class="experience-actions">
                         <button type="button" id="add-experience-btn" class="btn btn-outline">
@@ -150,11 +154,11 @@
                     </div>
                 </div>
 
-                <!-- Education - Dynamic -->
+                <!-- Education - Dynamic Section -->
                 <div class="form-section">
                     <h3>🎓 Education</h3>
                     <div id="education-container">
-                        <!-- Education entries will be dynamically added here -->
+                        <!-- Education entries will be dynamically added here by JavaScript -->
                     </div>
                     <div class="education-actions">
                         <button type="button" id="add-education-btn" class="btn btn-outline">
@@ -163,11 +167,11 @@
                     </div>
                 </div>
 
-                <!-- Projects - NEW DYNAMIC SECTION -->
+                <!-- Projects - Dynamic Section -->
                 <div class="form-section">
                     <h3>🚀 Projects</h3>
                     <div id="projects-container">
-                        <!-- Project entries will be dynamically added here -->
+                        <!-- Project entries will be dynamically added here by JavaScript -->
                     </div>
                     <div class="projects-actions">
                         <button type="button" id="add-project-btn" class="btn btn-outline">
@@ -175,7 +179,6 @@
                         </button>
                     </div>
                 </div>
-                
 
                 <!-- Skills -->
                 <div class="form-section">

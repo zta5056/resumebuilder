@@ -18,7 +18,7 @@
     <div class="builder-layout">
         <div class="builder-form">
             <form id="resume-form">
-                <!-- Personal Information -->
+                <!-- Personal Information - ENHANCED -->
                 <div class="form-section">
                     <h3>👤 Personal Information</h3>
                     <div class="form-row">
@@ -41,11 +41,54 @@
                             <input type="tel" id="phone" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.phone }}{% endif %}">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="location">Location</label>
-                        <input type="text" id="location" placeholder="City, State" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.location }}{% endif %}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location">Location</label>
+                            <input type="text" id="location" placeholder="City, State" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.location }}{% endif %}">
+                        </div>
+                        <div class="form-group">
+                            <label for="linkedin">LinkedIn Profile</label>
+                            <input type="url" id="linkedin" placeholder="https://linkedin.com/in/yourprofile" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.linkedin }}{% endif %}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="website">Portfolio/Website (Optional)</label>
+                            <input type="url" id="website" placeholder="https://yourwebsite.com" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.website }}{% endif %}">
+                        </div>
+                        <div class="form-group">
+                            <label for="github">GitHub Profile (Optional)</label>
+                            <input type="url" id="github" placeholder="https://github.com/yourusername" value="{% if resume_data.personal_info %}{{ resume_data.personal_info.github }}{% endif %}">
+                        </div>
+                    </div>
+                    
+                    <!-- ATS Score Preview - NEW FEATURE -->
+                    <div class="ats-score-preview" id="ats-score-preview" style="display: none;">
+                        <div class="score-header">
+                            <h4>🎯 ATS Compatibility Score</h4>
+                            <div class="score-circle">
+                                <span class="score-value" id="ats-score">--</span>
+                                <span class="score-max">/100</span>
+                            </div>
+                        </div>
+                        <div class="score-details">
+                            <div class="score-item">
+                                <span class="score-label">Keywords:</span>
+                                <span class="score-status" id="keywords-status">--</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">Sections:</span>
+                                <span class="score-status" id="sections-status">--</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">Format:</span>
+                                <span class="score-status" id="format-status">--</span>
+                            </div>
+                        </div>
+                        <div class="score-suggestions" id="score-suggestions"></div>
                     </div>
                 </div>
+
 
                 <!-- Professional Summary -->
                 <div class="form-section">

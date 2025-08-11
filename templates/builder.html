@@ -14,7 +14,48 @@
             </select>
         </div>
     </div>
+    <!-- Progress Indicator - ADD THIS AFTER template-selector div -->
+    <div class="progress-indicator">
+        <div class="progress-header">
+            <span class="progress-title">Resume Completion</span>
+            <span class="progress-percentage">0%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-sections">
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="personal">○</div>
+                <span>Personal</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="summary">○</div>
+                <span>Summary</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="experience">○</div>
+                <span>Experience</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="education">○</div>
+                <span>Education</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="projects">○</div>
+                <span>Projects</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-icon incomplete" data-section="skills">○</div>
+                <span>Skills</span>
+            </div>
+        </div>
+    </div>
     
+    <!-- Smart Suggestions Panel - ADD THIS RIGHT AFTER progress-indicator -->
+    <div class="smart-suggestions">
+        <!-- Dynamic content will be inserted here -->
+    </div>
+
     <div class="builder-layout">
         <div class="builder-form">
             <form id="resume-form">

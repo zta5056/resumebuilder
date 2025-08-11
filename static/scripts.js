@@ -346,6 +346,7 @@ function getElementValue(elementId) {
 // COMPLETE template HTML generation function
 // Updated generateTemplateHTML function - replace the experience section part
 // Updated generateTemplateHTML function
+// COMPLETE Enhanced generateTemplateHTML function
 function generateTemplateHTML(data, template) {
     try {
         console.log('Generating HTML for template:', template);
@@ -359,9 +360,9 @@ function generateTemplateHTML(data, template) {
                     ${data.email ? `<span>📧 ${escapeHtml(data.email)}</span>` : ''}
                     ${data.phone ? `<span>📞 ${escapeHtml(data.phone)}</span>` : ''}
                     ${data.location ? `<span>📍 ${escapeHtml(data.location)}</span>` : ''}
-                    ${data.linkedin ? `<span>💼 LinkedIn</span>` : ''}
-                    ${data.website ? `<span>🌐 Portfolio</span>` : ''}
-                    ${data.github ? `<span>💻 GitHub</span>` : ''}
+                    ${data.linkedin ? `<span>💼 <a href="${escapeHtml(data.linkedin)}" target="_blank">LinkedIn</a></span>` : ''}
+                    ${data.website ? `<span>🌐 <a href="${escapeHtml(data.website)}" target="_blank">Portfolio</a></span>` : ''}
+                    ${data.github ? `<span>💻 <a href="${escapeHtml(data.github)}" target="_blank">GitHub</a></span>` : ''}
                 </div>
             </div>
         `;
@@ -427,49 +428,7 @@ function generateTemplateHTML(data, template) {
             html += `</div>`;
         }
         
-        // Education Section - Dynamic entries
-        if (data.education && Array.isArray(data.education) && data.education.length > 0) {
-            html += `<div class="resume-section ${template}-section">
-                <h3>Education</h3>`;
-            
-            data.education.forEach(edu => {
-                if (edu.degree || edu.school) {
-                    html += `<div class="education-entry">`;
-                    
-                    // Degree and School
-                    if (edu.degree || edu.school) {
-                        html += `<div class="edu-header">
-                            <h4>${escapeHtml(edu.degree || 'Degree')}</h4>
-                            <span class="school">${escapeHtml(edu.school || 'School')}</span>
-                        </div>`;
-                    }
-                    
-                    // Date, Location, GPA
-                    let details = [];
-                    if (edu.graduationDate) {
-                        const gradDate = new Date(edu.graduationDate + '-01');
-                        details.push(gradDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
-                    }
-                    if (edu.location) details.push(edu.location);
-                    if (edu.gpa && parseFloat(edu.gpa) >= 3.5) details.push(`GPA: ${edu.gpa}`);
-                    
-                    if (details.length > 0) {
-                        html += `<div class="edu-dates">${details.join(' | ')}</div>`;
-                    }
-                    
-                    // Description
-                    if (edu.description) {
-                        html += `<div class="edu-description">${escapeHtml(edu.description).replace(/\n/g, '<br>')}</div>`;
-                    }
-                    
-                    html += `</div>`;
-                }
-            });
-            
-            html += `</div>`;
-        }
-        
-        // Projects Section - NEW
+        // Projects Section - Enhanced with links
         if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
             html += `<div class="resume-section ${template}-section">
                 <h3>Projects</h3>`;
@@ -522,6 +481,48 @@ function generateTemplateHTML(data, template) {
                     if (project.demoUrl) links.push(`<a href="${escapeHtml(project.demoUrl)}" target="_blank">Live Demo</a>`);
                     if (links.length > 0) {
                         html += `<div class="project-links">${links.join(' | ')}</div>`;
+                    }
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            html += `</div>`;
+        }
+        
+        // Education Section - Dynamic entries
+        if (data.education && Array.isArray(data.education) && data.education.length > 0) {
+            html += `<div class="resume-section ${template}-section">
+                <h3>Education</h3>`;
+            
+            data.education.forEach(edu => {
+                if (edu.degree || edu.school) {
+                    html += `<div class="education-entry">`;
+                    
+                    // Degree and School
+                    if (edu.degree || edu.school) {
+                        html += `<div class="edu-header">
+                            <h4>${escapeHtml(edu.degree || 'Degree')}</h4>
+                            <span class="school">${escapeHtml(edu.school || 'School')}</span>
+                        </div>`;
+                    }
+                    
+                    // Date, Location, GPA
+                    let details = [];
+                    if (edu.graduationDate) {
+                        const gradDate = new Date(edu.graduationDate + '-01');
+                        details.push(gradDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+                    }
+                    if (edu.location) details.push(edu.location);
+                    if (edu.gpa && parseFloat(edu.gpa) >= 3.5) details.push(`GPA: ${edu.gpa}`);
+                    
+                    if (details.length > 0) {
+                        html += `<div class="edu-dates">${details.join(' | ')}</div>`;
+                    }
+                    
+                    // Description
+                    if (edu.description) {
+                        html += `<div class="edu-description">${escapeHtml(edu.description).replace(/\n/g, '<br>')}</div>`;
                     }
                     
                     html += `</div>`;
@@ -2118,3 +2119,399 @@ function updatePreview() {
         showMessage('Error updating preview', 'error');
     }
 }
+
+// Advanced AI Features & Progress Tracking - COMPLETE IMPLEMENTATION
+let atsScore = 0;
+let progressData = {
+    personal: 0,
+    summary: 0,
+    experience: 0,
+    education: 0,
+    projects: 0,
+    skills: 0
+};
+
+// Initialize advanced features
+function initializeAdvancedFeatures() {
+    console.log('Initializing advanced features...');
+    // Initialize progress tracking
+    updateProgressIndicator();
+    
+    // Initialize ATS scoring
+    setTimeout(() => {
+        calculateATSScore();
+    }, 1000);
+    
+    // Initialize smart suggestions
+    initializeSmartSuggestions();
+}
+
+// Progress Indicator System
+function updateProgressIndicator() {
+    // Calculate section completion
+    progressData.personal = calculatePersonalInfoProgress();
+    progressData.summary = document.getElementById('summary-input')?.value.length > 50 ? 100 : 0;
+    progressData.experience = experienceEntries.length > 0 && experienceEntries[0].company ? 100 : 0;
+    progressData.education = educationEntries.length > 0 && educationEntries[0].degree ? 100 : 0;
+    progressData.projects = projectEntries.length > 0 && projectEntries[0].name ? 100 : 0;
+    progressData.skills = document.getElementById('skills-input')?.value.length > 20 ? 100 : 0;
+    
+    const totalProgress = Object.values(progressData).reduce((a, b) => a + b, 0) / 6;
+    
+    // Update progress bar if it exists
+    const progressFill = document.querySelector('.progress-fill');
+    const progressPercentage = document.querySelector('.progress-percentage');
+    
+    if (progressFill && progressPercentage) {
+        progressFill.style.width = `${totalProgress}%`;
+        progressPercentage.textContent = `${Math.round(totalProgress)}%`;
+    }
+    
+    // Update section indicators
+    updateSectionIndicators();
+}
+
+function calculatePersonalInfoProgress() {
+    const fields = ['name', 'email', 'title', 'location'];
+    let completedFields = 0;
+    
+    fields.forEach(fieldId => {
+        if (document.getElementById(fieldId)?.value.trim()) {
+            completedFields++;
+        }
+    });
+    
+    return (completedFields / fields.length) * 100;
+}
+
+function updateSectionIndicators() {
+    const sections = ['personal', 'summary', 'experience', 'education', 'projects', 'skills'];
+    
+    sections.forEach(section => {
+        const indicator = document.querySelector(`.progress-icon[data-section="${section}"]`);
+        if (indicator) {
+            if (progressData[section] >= 80) {
+                indicator.className = 'progress-icon complete';
+                indicator.textContent = '✓';
+            } else {
+                indicator.className = 'progress-icon incomplete';
+                indicator.textContent = Math.round(progressData[section] / 20) || '○';
+            }
+        }
+    });
+}
+
+// Real-time ATS Score Calculation
+function calculateATSScore() {
+    let score = 0;
+    let suggestions = [];
+    
+    // Check required sections (40 points)
+    const requiredSections = {
+        name: document.getElementById('name')?.value.trim(),
+        email: document.getElementById('email')?.value.trim(),
+        summary: document.getElementById('summary-input')?.value.trim(),
+        experience: experienceEntries.length > 0,
+        skills: document.getElementById('skills-input')?.value.trim()
+    };
+    
+    Object.entries(requiredSections).forEach(([key, value]) => {
+        if (value) score += 8;
+        else suggestions.push(`Add ${key} section for better ATS compatibility`);
+    });
+    
+    // Check contact information (20 points)
+    const contactFields = ['phone', 'location', 'linkedin'];
+    contactFields.forEach(field => {
+        if (document.getElementById(field)?.value.trim()) {
+            score += 6.67;
+        }
+    });
+    
+    // Check keyword density (20 points)
+    const jobTitle = document.getElementById('title')?.value.toLowerCase() || '';
+    const allText = getAllResumeText().toLowerCase();
+    
+    if (jobTitle) {
+        const titleWords = jobTitle.split(' ');
+        let keywordMatches = 0;
+        titleWords.forEach(word => {
+            if (allText.includes(word) && word.length > 2) {
+                keywordMatches++;
+            }
+        });
+        score += Math.min(keywordMatches * 4, 20);
+    }
+    
+    // Check formatting (20 points)
+    if (experienceEntries.some(exp => exp.startDate)) score += 5; // Dates
+    if (experienceEntries.some(exp => exp.description && exp.description.includes('•'))) score += 5; // Bullet points
+    if (educationEntries.length > 0) score += 5; // Education section
+    if (projectEntries.length > 0) score += 5; // Projects section
+    
+    atsScore = Math.min(Math.round(score), 100);
+    updateATSScoreDisplay(suggestions);
+}
+
+function getAllResumeText() {
+    let text = '';
+    
+    // Add all form text content
+    const textFields = ['summary-input', 'skills-input'];
+    textFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) text += ' ' + field.value;
+    });
+    
+    // Add experience descriptions
+    experienceEntries.forEach(exp => {
+        text += ' ' + (exp.description || '');
+    });
+    
+    // Add education descriptions
+    educationEntries.forEach(edu => {
+        text += ' ' + (edu.description || '');
+    });
+    
+    // Add project descriptions
+    projectEntries.forEach(project => {
+        text += ' ' + (project.description || '');
+    });
+    
+    return text;
+}
+
+function updateATSScoreDisplay(suggestions) {
+    const scoreElement = document.getElementById('ats-score');
+    const previewElement = document.getElementById('ats-score-preview');
+    
+    if (scoreElement) {
+        scoreElement.textContent = atsScore;
+        scoreElement.className = atsScore >= 80 ? 'high-score' : atsScore >= 60 ? 'medium-score' : 'low-score';
+    }
+    
+    if (previewElement && atsScore > 0) {
+        previewElement.style.display = 'block';
+        
+        // Update status indicators
+        const keywordsStatus = document.getElementById('keywords-status');
+        const sectionsStatus = document.getElementById('sections-status');
+        const formatStatus = document.getElementById('format-status');
+        
+        if (keywordsStatus) keywordsStatus.textContent = atsScore >= 70 ? 'Good' : 'Needs Work';
+        if (sectionsStatus) sectionsStatus.textContent = progressData.experience && progressData.education ? 'Complete' : 'Missing';
+        if (formatStatus) formatStatus.textContent = experienceEntries.some(exp => exp.startDate) ? 'Good' : 'Improve';
+        
+        // Update suggestions
+        const suggestionsElement = document.getElementById('score-suggestions');
+        if (suggestionsElement) {
+            if (suggestions.length > 0) {
+                suggestionsElement.innerHTML = `
+                    <strong>Improvement Suggestions:</strong>
+                    <ul>${suggestions.map(s => `<li>${s}</li>`).join('')}</ul>
+                `;
+            } else {
+                suggestionsElement.innerHTML = '<strong>Great job!</strong> Your resume has excellent ATS compatibility.';
+            }
+        }
+    }
+}
+
+// Smart Suggestions System
+function initializeSmartSuggestions() {
+    // Check for missing sections and suggest additions
+    setTimeout(checkForSmartSuggestions, 2000);
+}
+
+function checkForSmartSuggestions() {
+    const suggestions = [];
+    
+    // Check for missing LinkedIn
+    if (!document.getElementById('linkedin')?.value.trim()) {
+        suggestions.push({
+            type: 'linkedin',
+            text: 'Add your LinkedIn profile to increase professional credibility',
+            action: 'Focus LinkedIn field'
+        });
+    }
+    
+    // Check for missing projects in tech roles
+    const jobTitle = document.getElementById('title')?.value.toLowerCase() || '';
+    if ((jobTitle.includes('engineer') || jobTitle.includes('developer') || jobTitle.includes('programmer')) 
+        && projectEntries.length === 0) {
+        suggestions.push({
+            type: 'projects',
+            text: 'Technical roles benefit from showcasing relevant projects',
+            action: 'Add project'
+        });
+    }
+    
+    // Check for missing quantified achievements
+    const hasNumbers = experienceEntries.some(exp => 
+        exp.description && /\d+%|\$\d+|\d+\+/.test(exp.description)
+    );
+    
+    if (!hasNumbers && experienceEntries.length > 0) {
+        suggestions.push({
+            type: 'metrics',
+            text: 'Add specific numbers and metrics to your achievements for better impact',
+            action: 'Review experience'
+        });
+    }
+    
+    displaySmartSuggestions(suggestions);
+}
+
+function displaySmartSuggestions(suggestions) {
+    if (suggestions.length === 0) return;
+    
+    const suggestionsPanel = document.querySelector('.smart-suggestions');
+    if (!suggestionsPanel) return;
+    
+    const suggestionsHTML = suggestions.map(suggestion => `
+        <div class="suggestion-item">
+            <div class="suggestion-text">${suggestion.text}</div>
+            <button class="suggestion-action" onclick="handleSuggestionAction('${suggestion.type}')">${suggestion.action}</button>
+        </div>
+    `).join('');
+    
+    suggestionsPanel.innerHTML = `
+        <div class="suggestions-header">
+            <span>🎯</span>
+            <h4>Smart Suggestions</h4>
+        </div>
+        ${suggestionsHTML}
+    `;
+    
+    suggestionsPanel.classList.add('show');
+}
+
+function handleSuggestionAction(type) {
+    switch (type) {
+        case 'linkedin':
+            document.getElementById('linkedin')?.focus();
+            break;
+        case 'projects':
+            addProjectEntry();
+            break;
+        case 'metrics':
+            if (experienceEntries.length > 0) {
+                document.getElementById(`${experienceEntries[0].id}-description`)?.focus();
+            }
+            break;
+    }
+}
+
+// Enhanced updatePreview function to include all new fields and features
+function updatePreview() {
+    try {
+        console.log('Updating preview with template:', currentTemplate);
+        
+        const previewElement = document.getElementById('resume-preview');
+        if (!previewElement) {
+            console.error('Preview element not found');
+            return;
+        }
+        
+        // Update preview class with current template
+        previewElement.className = `resume-preview ${currentTemplate}-template`;
+        
+        // Collect all form data including enhanced personal info
+        resumeData = {
+            name: getElementValue('name') || 'Your Name',
+            title: getElementValue('title') || '',
+            email: getElementValue('email') || '',
+            phone: getElementValue('phone') || '',
+            location: getElementValue('location') || '',
+            linkedin: getElementValue('linkedin') || '',
+            website: getElementValue('website') || '',
+            github: getElementValue('github') || '',
+            summary: getElementValue('summary-input') || '',
+            experience: getExperienceData(),
+            education: getEducationData(),
+            projects: getProjectsData(),
+            skills: getElementValue('skills-input') || '',
+            template: currentTemplate
+        };
+        
+        console.log('Resume data collected:', resumeData);
+        
+        // Generate HTML preview
+        const html = generateTemplateHTML(resumeData, currentTemplate);
+        previewElement.innerHTML = html;
+        
+        // Update progress and ATS score
+        updateProgressIndicator();
+        calculateATSScore();
+        
+        console.log('Preview updated successfully');
+        
+    } catch (error) {
+        console.error('Preview update error:', error);
+        showMessage('Error updating preview', 'error');
+    }
+}
+
+// Enhanced loadSavedData function to include all new fields
+async function loadSavedData() {
+    try {
+        const response = await fetch('/get_resume_data');
+        const savedData = await response.json();
+        
+        if (savedData && Object.keys(savedData).length > 0) {
+            console.log('Loading saved data:', savedData);
+            
+            // Populate enhanced personal info fields
+            if (savedData.personal_info) {
+                const personalInfo = savedData.personal_info;
+                const personalFields = ['name', 'title', 'email', 'phone', 'location', 'linkedin', 'website', 'github'];
+                
+                personalFields.forEach(field => {
+                    const element = document.getElementById(field);
+                    if (element && personalInfo[field]) {
+                        element.value = personalInfo[field];
+                    }
+                });
+            }
+            
+            if (savedData.summary && document.getElementById('summary-input')) {
+                document.getElementById('summary-input').value = savedData.summary;
+            }
+            
+            // Load dynamic sections
+            if (savedData.experience) {
+                loadExperienceEntries(savedData.experience);
+            }
+            
+            if (savedData.education) {
+                loadEducationEntries(savedData.education);
+            }
+            
+            if (savedData.projects) {
+                loadProjectEntries(savedData.projects);
+            }
+            
+            if (savedData.skills && document.getElementById('skills-input')) {
+                document.getElementById('skills-input').value = savedData.skills;
+            }
+            
+            // Set template
+            if (savedData.template) {
+                currentTemplate = savedData.template;
+                const templateSelect = document.getElementById('template-select');
+                if (templateSelect) {
+                    templateSelect.value = currentTemplate;
+                }
+            }
+            
+            // Update preview with loaded data
+            setTimeout(() => {
+                updatePreview();
+                initializeAdvancedFeatures();
+            }, 100);
+        }
+    } catch (error) {
+        console.error('Error loading saved data:', error);
+    }
+}
+
